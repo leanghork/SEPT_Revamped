@@ -1,5 +1,7 @@
 package model;
 
+import controller.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -12,18 +14,22 @@ import java.util.*;
 public class Model 
 	extends JTabbedPane
 {
+	public static final int clear = -1;
 	public static final int rectangle = 0;
-	public static final int cirle = 1;
+	public static final int circle = 1;
 	public static final int line = 2;
 	public static final int select = 3;
 	public static final int group = 4;
+	public static final int ungroup = 5;
+	
+	
+	private int option = clear;
 	
 	private LinkedList<DrawingBoard> board = new LinkedList<DrawingBoard>();
 	
 	public Model()
 	{
-		board.add(new DrawingBoard());
-		this.showTab();
+		this.openNew();
 	}
 	
 	public Model(String[]args)
@@ -35,20 +41,93 @@ public class Model
 			if( this.checkFile(toOpen) )
 			{
 				board.add(new DrawingBoard(toOpen));
+				board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
 				this.showTab();
 			}
 		}
+		
+		this.setSelectedIndex(0);
+	}
+	
+	public void setOption(int opt)
+	{
+		this.option = opt;
+	}
+	
+	public int currentOption()
+	{
+		return option;
+	}
+	
+	public void zoomIn()
+	{
+		int index = this.getSelectedIndex();
+		
+		if(board.get(index).getZoom() <1000)
+			board.get(index).setZoom( board.get(index).getZoom()+100 );
+		
+		this.refresh();
+	}
+	
+	public void zoomOut()
+	{
+		int index = this.getSelectedIndex();
+		
+		if(board.get(index).getZoom() > 0)
+			board.get(index).setZoom( board.get(index).getZoom()-100 );
+		
+		this.refresh();
+	}
+		
+	public void openFile()
+	{
+		JFileChooser op = new JFileChooser(System.getProperty("user.home"));
+		
+		op.setFileFilter
+		(
+			new javax.swing.filechooser.FileFilter()
+			{
+				public boolean accept(File f)
+				{
+					return (f.getName().toLowerCase()).endsWith("svg")||f.isDirectory();
+				}
+				
+				public String getDescription()
+				{
+					return "SVG file";
+				}
+			}
+		);
+		
+		if(op.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+		{
+			File toOpen = op.getSelectedFile();
+			
+			if( this.checkFile(toOpen) )
+			{
+				board.add(new DrawingBoard(toOpen));
+				board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
+				this.showTab();
+			}
+		}
+		
+	}
+	
+	public void openNew()
+	{
+		board.add(new DrawingBoard());
+		board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
+		this.showTab();
 	}
 	
 	private void showTab()
 	{
 		DrawingBoard db = board.getLast();
 		String title = db.getFileName();
-				
+					
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
-		panel.setBackground(Color.WHITE);
-		panel.add(db);
+		panel.add(db.getPanel());
 		
 		JScrollPane scroll = new JScrollPane();
 		JViewport view = scroll.getViewport();
@@ -59,6 +138,12 @@ public class Model
 				
 		this.add(scroll);
 		this.setTitleAt(this.getTabCount()-1, title);
+		this.setSelectedIndex(this.getTabCount()-1);
+	}
+	
+	public void closeTab()
+	{
+		
 	}
 		
 	public boolean checkFile(File f)
@@ -85,5 +170,11 @@ public class Model
 		}
 		
 		return true;
+	}
+
+	public void refresh()
+	{
+		this.revalidate();
+		this.repaint();
 	}
 }

@@ -51,6 +51,16 @@ public class DrawingBoard
 		return toRead.getName();
 	}
 	
+	public JPanel getPanel()
+	{
+		JPanel panel = new JPanel();
+		panel.setBackground(Color.WHITE);
+		panel.add(this);
+		
+		return panel;
+	}
+	
+	
 	/**
 	 * Shape
 	 */
@@ -64,6 +74,45 @@ public class DrawingBoard
 		}
 		
 		this.refresh();
+	}
+	
+	public void select(double startX, double startY)
+	{
+		this.selected.clear();
+				
+		for(int i = shapes.size()-1; i>=0; i--)
+		{
+			PolyObj toSelect = shapes.get(i);
+			
+			Rectangle2D.Double area = new Rectangle2D.Double(startX-toSelect.strokeWidth-2,startY-toSelect.strokeWidth-2,toSelect.strokeWidth *2+4, toSelect.strokeWidth*2+4);
+			
+			if(toSelect.shape instanceof Line2D)
+			{
+				if( ((Line2D.Double)toSelect.shape).intersects(area) )
+				{
+					selected.add(toSelect);
+					break;
+				}
+			}
+			
+			if(toSelect.shape instanceof Rectangle2D)
+			{
+				if( ((Rectangle2D.Double)toSelect.shape).intersects(area) )
+				{
+					selected.add(toSelect);
+					break;
+				}
+			}
+			
+			if(toSelect.shape instanceof Ellipse2D)
+			{
+				if( ((Ellipse2D.Double)toSelect.shape).intersects(area) )
+				{
+					selected.add(toSelect);
+					break;
+				}
+			}
+		}
 	}
 	
 	public void select(double startX, double startY, double endX, double endY)
@@ -112,6 +161,8 @@ public class DrawingBoard
 			}
 		}
 		
+		this.refresh();
+		
 	}
 	
 	public void remove()
@@ -122,6 +173,16 @@ public class DrawingBoard
 		}
 		
 		this.selected.clear();
+		this.refresh();
+	}
+	
+	/**
+	 * Drawing
+	 */
+	public void addShape(PolyObj toAdd)
+	{
+		this.shapes.add(toAdd);
+		
 		this.refresh();
 	}
 	
@@ -246,6 +307,7 @@ public class DrawingBoard
 				double x2 = ((Line2D.Double)selects.shape).getX2();
 				double y2 = ((Line2D.Double)selects.shape).getY2();
 				
+				g.setStroke(new BasicStroke(0));
 				g.setColor(Color.WHITE);
 				g.fill(new Rectangle2D.Double(x1-5, y1-5, 10, 10));
 				g.fill(new Rectangle2D.Double(x2-5, y2-5, 10, 10));
@@ -259,9 +321,10 @@ public class DrawingBoard
 			{
 				double x = ((Rectangle2D.Double)selects.shape).getX() - selects.strokeWidth/2;
 				double y = ((Rectangle2D.Double)selects.shape).getY() - selects.strokeWidth/2;
-				double width = ((Rectangle2D.Double)selects.shape).getWidth() - selects.strokeWidth;
-				double height = ((Rectangle2D.Double)selects.shape).getHeight() - selects.strokeWidth;
+				double width = ((Rectangle2D.Double)selects.shape).getWidth() + selects.strokeWidth;
+				double height = ((Rectangle2D.Double)selects.shape).getHeight() + selects.strokeWidth;
 				
+				g.setStroke(new BasicStroke(0));
 				g.setColor(Color.WHITE);
 				g.fill(new Rectangle2D.Double(x - 5.0, y - 5.0, 10.0, 10.0));
 				g.fill(new Rectangle2D.Double(x + width * 0.5 - 5.0, y - 5.0, 10.0, 10.0));
@@ -285,22 +348,23 @@ public class DrawingBoard
 			
 			if(selects.shape instanceof Ellipse2D)
 			{
-				double x = ((Ellipse2D.Double)selects.shape).getX() - selects.strokeWidth/2;;
-				double y = ((Ellipse2D.Double)selects.shape).getX() - selects.strokeWidth/2;;
-				double width = ((Ellipse2D.Double)selects.shape).getWidth() - selects.strokeWidth;
-				double height = ((Ellipse2D.Double)selects.shape).getHeight() - selects.strokeWidth;
+				double x = ((Ellipse2D.Double)selects.shape).getX();
+				double y = ((Ellipse2D.Double)selects.shape).getY();	
+				double w = ((Ellipse2D.Double)selects.shape).getWidth();
+				double h = ((Ellipse2D.Double)selects.shape).getHeight();
 				
+				g.setStroke(new BasicStroke(0));
 				g.setColor(Color.WHITE);
 				g.fill(new Rectangle2D.Double(x - 5.0, y - 5.0, 10.0, 10.0));
-		        g.fill(new Rectangle2D.Double(x + width - 5.0, y - 5.0, 10.0, 10.0));
-			    g.fill(new Rectangle2D.Double(x - 5.0, y + height - 5.0, 10.0, 10.0));
-			    g.fill(new Rectangle2D.Double(x + width - 5.0, y + height - 5.0, 10.0, 10.0));
+		        g.fill(new Rectangle2D.Double(x + w - 5.0, y - 5.0, 10.0, 10.0));
+			    g.fill(new Rectangle2D.Double(x - 5.0, y + h - 5.0, 10.0, 10.0));
+			    g.fill(new Rectangle2D.Double(x + w - 5.0, y + h - 5.0, 10.0, 10.0));
 			    
 			    g.setColor(Color.BLACK);
-			    g.draw(new Rectangle2D.Double(x - 5.0, y - 5.0, 10.0, 10.0));
-		        g.draw(new Rectangle2D.Double(x + width - 5.0, y - 5.0, 10.0, 10.0));
-			    g.draw(new Rectangle2D.Double(x - 5.0, y + height - 5.0, 10.0, 10.0));
-			    g.draw(new Rectangle2D.Double(x + width - 5.0, y + height - 5.0, 10.0, 10.0));								
+				g.draw(new Rectangle2D.Double(x - 5.0, y - 5.0, 10.0, 10.0));
+		        g.draw(new Rectangle2D.Double(x + w - 5.0, y - 5.0, 10.0, 10.0));
+			    g.draw(new Rectangle2D.Double(x - 5.0, y + h - 5.0, 10.0, 10.0));
+			    g.draw(new Rectangle2D.Double(x + w - 5.0, y + h - 5.0, 10.0, 10.0));
 			}
 		}
 	}
