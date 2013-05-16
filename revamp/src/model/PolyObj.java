@@ -24,6 +24,11 @@ public class PolyObj
 		
 	}
 	
+	public void replaceShape(Shape shape)
+	{
+		this.shape = shape;
+	}
+	
 	public PolyObj clone()
 	{
 		Shape cloneShape = null;

@@ -42,6 +42,7 @@ public class Model
 			{
 				board.add(new DrawingBoard(toOpen));
 				board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
+				board.getLast().addMouseMotionListener(new MouseControl(this,board.getLast()));
 				this.showTab();
 			}
 		}
@@ -107,6 +108,7 @@ public class Model
 			{
 				board.add(new DrawingBoard(toOpen));
 				board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
+				board.getLast().addMouseMotionListener(new MouseControl(this,board.getLast()));
 				this.showTab();
 			}
 		}
@@ -117,6 +119,7 @@ public class Model
 	{
 		board.add(new DrawingBoard());
 		board.getLast().addMouseListener(new MouseControl(this,board.getLast()));
+		board.getLast().addMouseMotionListener(new MouseControl(this,board.getLast()));
 		this.showTab();
 	}
 	

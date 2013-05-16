@@ -92,8 +92,18 @@ public class MouseControl implements MouseListener, MouseMotionListener
 	
 	@Override
 	public void mouseDragged(MouseEvent e) 
-	{
-
+	{System.out.println("asd");
+		switch(tab.currentOption())
+		{
+			case Model.select:
+			{
+				
+				theBoard.moves(e.getX()-50, e.getY()-50);
+				
+				tab.refresh();
+			}	
+			break;
+		}
 	}
 	
 	@Override

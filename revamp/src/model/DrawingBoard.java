@@ -185,10 +185,36 @@ public class DrawingBoard
 		
 		this.refresh();
 	}
+
+	public void moves(double x, double y)
+	{
+		for(int i=0;i<selected.size();i++)
+		{
+			PolyObj select = selected.get(i);
+			
+			for(int j=0;j<shapes.size();j++)
+			{
+				if(select.equals(shapes.get(j)))
+				{
+					if(select.shape instanceof Rectangle2D)
+					{
+						double width = ((Rectangle2D)select.shape).getWidth();
+						double height = ((Rectangle2D)select.shape).getHeight();
+						
+						Rectangle2D newShape = new Rectangle2D.Double(x,y,width,height);
+						System.out.println(shapes.get(j).shape);
+						shapes.get(j).replaceShape(newShape);
+						System.out.println(shapes.get(j).shape);
+					}
+				}
+			}
+		}
+	}
 	
 	/**
 	 * Size 
 	 */
+
 	
 	public int getZoom()
 	{
