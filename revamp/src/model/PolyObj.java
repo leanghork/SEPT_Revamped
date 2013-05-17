@@ -41,6 +41,9 @@ public class PolyObj
 	
 	public void ungroup()
 	{
+		if(groupID.isEmpty())
+			return;
+		
 		groupID.removeLast();
 	}
 	
