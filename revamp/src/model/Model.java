@@ -23,7 +23,7 @@ public class Model
 	public static final int ungroup = 5;
 	
 	
-	private int option = clear;
+	private int option = select;
 	
 	private LinkedList<DrawingBoard> board = new LinkedList<DrawingBoard>();
 	
@@ -79,7 +79,94 @@ public class Model
 		
 		this.refresh();
 	}
+	
+	public void delete()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).remove();
 		
+		this.refresh();
+	}
+	
+	public void selectAll()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).selectAll();
+		
+		this.refresh();
+	}
+	
+	public void group()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).group();
+		
+		this.refresh();
+	}
+	
+	public void ungroup()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).ungroup();
+		
+		this.refresh();
+	}
+	
+	public void setFill()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).selectFill();
+	}
+	
+	public void setStroke()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).selectStroke();
+	}
+	
+	public void setStrokeWidth()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).setStrokeWidth();
+	}
+		
+	public void deselect()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).deselect();
+	}
+	
+	public void save()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).save();
+	}
+	
+	public void saveAs()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).saveas();
+	}
+	
+	public void document()
+	{
+		int index = this.getSelectedIndex();
+
+		board.get(index).document();
+		
+		this.refresh();
+	}
+	
 	public void openFile()
 	{
 		JFileChooser op = new JFileChooser(System.getProperty("user.home"));
@@ -147,6 +234,11 @@ public class Model
 	public void closeTab()
 	{
 		
+	}
+	
+	public LinkedList<DrawingBoard> getBoard()
+	{
+		return board;
 	}
 		
 	public boolean checkFile(File f)

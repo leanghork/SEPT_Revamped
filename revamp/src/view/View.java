@@ -16,9 +16,15 @@ public class View
 	public View(String [] args)
 	{
 		if(args.length != 0)
+		{
 			tab = new Model(args);
+			tab.addKeyListener(new KeyController(this,tab));
+		}
 		else
+		{
 			tab = new Model();
+			tab.addKeyListener(new KeyController(this,tab));
+		}
 				
 		this.addToFrame();
 		
@@ -48,18 +54,24 @@ public class View
 		JMenuItem newFile = new JMenuItem("New");
 		JMenuItem open = new JMenuItem("Open");
 		JMenuItem save = new JMenuItem("Save");
+		JMenuItem saveAs = new JMenuItem("Save As");
+		JMenuItem document = new JMenuItem("Document Properties");
 		JMenuItem zoomIn = new JMenuItem("Zoom In");
 		JMenuItem zoomOut = new JMenuItem("Zoom Out");
 		
 		newFile.setActionCommand("new");
 		open.setActionCommand("open");
 		save.setActionCommand("save");
+		saveAs.setActionCommand("saveas");
+		document.setActionCommand("document");
 		zoomIn.setActionCommand("zoomin");
 		zoomOut.setActionCommand("zoomOut");
 			
 		file.add(newFile);
 		file.add(open);
 		file.add(save);
+		file.add(saveAs);
+		file.add(document);
 		zoom.add(zoomIn);
 		zoom.add(zoomOut);
 		
@@ -67,8 +79,10 @@ public class View
 		newFile.addActionListener(new ActionControl(this,tab));
 		open.addActionListener(new ActionControl(this,tab));
 		save.addActionListener(new ActionControl(this,tab));
+		document.addActionListener(new ActionControl(this,tab));
 		zoomIn.addActionListener(new ActionControl(this,tab));
 		zoomOut.addActionListener(new ActionControl(this,tab));
+		saveAs.addActionListener(new ActionControl(this,tab));
 		
 		
 		menu.add(file);

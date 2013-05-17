@@ -18,8 +18,14 @@ public class ActionControl
 	
 	public void actionPerformed(ActionEvent e)
 	{
+		tab.refresh();
+		
 		switch(e.getActionCommand())
 		{
+			case "document":
+				tab.document();
+			break;
+			
 			case "new":
 				tab.openNew();
 			break;
@@ -29,6 +35,12 @@ public class ActionControl
 			break;
 			
 			case "save":
+				tab.save();
+			break;
+			
+			case "saveas":
+				System.out.println("test");
+				tab.saveAs();
 			break;
 			
 			case "zoomin":
@@ -41,41 +53,50 @@ public class ActionControl
 			
 			case "select":
 				tab.setOption(Model.select);
+				
 			break;
 			
 			case "circle":
 				tab.setOption(Model.circle);
+				tab.deselect();
 			break;
 			
 			case "rect":
 				tab.setOption(Model.rectangle);
+				tab.deselect();
 			break;
 			
 			case "line":
 				tab.setOption(Model.line);
+				tab.deselect();
 			break;
 			
 			case "group":
-				tab.setOption(Model.group);
+				tab.group();
 			break;
 			
 			case "ungroup":
-				tab.setOption(Model.ungroup);
+				tab.ungroup();
 			break;
 			
 			case "delete":
+				tab.delete();
 			break;
 			
 			case "stroke":
+				tab.setStroke();
 			break;
 			
 			case "strokeWidth":
+				tab.setStrokeWidth();
 			break;
 			
 			case "fill":
+				tab.setFill();
 			break;
 				
 			default:
+				
 			break;			
 		}
 	}

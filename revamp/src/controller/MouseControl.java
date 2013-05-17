@@ -10,7 +10,8 @@ public class MouseControl implements MouseListener, MouseMotionListener
 {
 	private Model tab = null;
 	private DrawingBoard theBoard = null;
-	private double startX, startY, endX, endY;
+	static double startX, startY, endX, endY, tempX, tempY;
+	
 	
 	public MouseControl(Model tab, DrawingBoard theBoard)
 	{
@@ -23,6 +24,11 @@ public class MouseControl implements MouseListener, MouseMotionListener
 	{
 		startX = e.getX()-50;
 		startY = e.getY()-50;
+		
+		tempX = e.getX()-50;
+		tempY = e.getY()-50;
+		
+		//System.out.println(startX);
 	}
 
 	@Override
@@ -35,8 +41,10 @@ public class MouseControl implements MouseListener, MouseMotionListener
 		{
 			case Model.select:
 			{
-				theBoard.select(startX, startY,endX, endY);
-				
+				theBoard.setTempPolyObj(null);
+				if(theBoard.getSelectedList().size()==0){
+					theBoard.select(startX, startY,endX, endY);
+				}
 				tab.refresh();
 			}	
 			break;
@@ -62,7 +70,7 @@ public class MouseControl implements MouseListener, MouseMotionListener
 								
 				Rectangle2D.Double shape = new Rectangle2D.Double(startX,startY,width,height);
 
-				theBoard.addShape(new PolyObj(shape,2,Color.LIGHT_GRAY,Color.BLACK));
+				theBoard.addShape(new PolyObj(shape,theBoard.getStrokeWidth(),theBoard.getFill(),theBoard.getStroke()));
 				tab.refresh();
 			}	
 			break;
@@ -72,7 +80,7 @@ public class MouseControl implements MouseListener, MouseMotionListener
 				double radius = Math.sqrt( (startX-endX)*(startX-endX) + (startY-endY)*(startY-endY) );
 				
 				Ellipse2D.Double shape = new Ellipse2D.Double(startX-radius, startY-radius, radius*2, radius*2);
-				theBoard.addShape(new PolyObj(shape,2,Color.LIGHT_GRAY,Color.BLACK));
+				theBoard.addShape(new PolyObj(shape,theBoard.getStrokeWidth(),theBoard.getFill(),theBoard.getStroke()));
 				
 				tab.refresh();
 			}
@@ -81,7 +89,7 @@ public class MouseControl implements MouseListener, MouseMotionListener
 			case Model.line:
 			{
 				Line2D.Double shape = new Line2D.Double(startX,startY,endX,endY);
-				theBoard.addShape(new PolyObj(shape,2,null,Color.BLACK));
+				theBoard.addShape(new PolyObj(shape,theBoard.getStrokeWidth(),null,theBoard.getStroke()));
 				
 				tab.refresh();
 			}
@@ -92,14 +100,20 @@ public class MouseControl implements MouseListener, MouseMotionListener
 	
 	@Override
 	public void mouseDragged(MouseEvent e) 
-	{System.out.println("asd");
+	{
 		switch(tab.currentOption())
 		{
 			case Model.select:
 			{
-				
-				theBoard.moves(e.getX()-50, e.getY()-50);
-				
+				theBoard.setTempPolyObj(null);
+				endX = e.getX()-50;
+				endY = e.getY()-50;
+				theBoard.moves(tempX,tempY,endX, endY);
+				tempX = endX;
+				tempY = endY;
+				if(theBoard.getSelectedList().size()==0){
+					theBoard.setTempPolyObj(new PolyObj(new Rectangle2D.Double(startX,startY,endX-startX,endY-startY),1,new Color(0,0,255,30),Color.BLACK));
+				}
 				tab.refresh();
 			}	
 			break;
@@ -123,14 +137,29 @@ public class MouseControl implements MouseListener, MouseMotionListener
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		// TODO Auto-generated method stub
+		switch(tab.currentOption())
+		{
+			case Model.select:
+			{
+				theBoard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+			}	
+			break;
+			
+			default:
+			{
+				theBoard.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+			}	
+			break;	
+			
+		}
 
 	}
 
 	
 
 	@Override
-	public void mouseEntered(MouseEvent e) {
+	public void mouseEntered(MouseEvent e) 
+	{
 		// TODO Auto-generated method stub
 
 	}

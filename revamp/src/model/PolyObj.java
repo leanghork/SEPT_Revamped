@@ -3,6 +3,7 @@ package model;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.*;
 
 public class PolyObj 
 {
@@ -10,6 +11,7 @@ public class PolyObj
 	public int strokeWidth;
 	public Color fill, stroke;
 	private boolean select;
+	private LinkedList<Integer> groupID = new LinkedList<Integer>();
 	
 	public PolyObj(Shape shape, int strokeWidth, Color fill, Color stroke)
 	{
@@ -22,6 +24,24 @@ public class PolyObj
 	public void setSelected()
 	{
 		
+	}
+	
+	public int checkGroup()
+	{
+		if(groupID.isEmpty())
+			return 0;
+		
+		return groupID.getLast();
+	}
+	
+	public void group(int id)
+	{
+		groupID.add(id);
+	}
+	
+	public void ungroup()
+	{
+		groupID.removeLast();
 	}
 	
 	public void replaceShape(Shape shape)
