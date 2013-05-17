@@ -51,9 +51,12 @@ public class ActionControl
 				tab.zoomOut();
 			break;
 			
+			case "selectall":
+				tab.selectAll();
+			break;
+			
 			case "select":
-				tab.setOption(Model.select);
-				
+				tab.setOption(Model.select);	
 			break;
 			
 			case "circle":
@@ -96,7 +99,7 @@ public class ActionControl
 			break;
 				
 			default:
-				
+				System.err.println("<SVG editor> ActionListener detected invalid action in ActionControl.java...");
 			break;			
 		}
 	}

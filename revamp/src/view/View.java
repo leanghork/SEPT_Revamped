@@ -4,6 +4,9 @@ import model.*;
 import controller.*;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+
 import javax.swing.*;
 
 public class View 
@@ -11,19 +14,19 @@ public class View
 {
 	private Model tab = null;
 	
-	
-		
+	/**
+	 * Constructor
+	 * @param args
+	 */
 	public View(String [] args)
 	{
 		if(args.length != 0)
 		{
 			tab = new Model(args);
-			tab.addKeyListener(new KeyController(this,tab));
 		}
 		else
 		{
 			tab = new Model();
-			tab.addKeyListener(new KeyController(this,tab));
 		}
 				
 		this.addToFrame();
@@ -33,6 +36,9 @@ public class View
 		this.setVisible(true);
 	}
 		
+	/**
+	 * Add all components to the JFrame
+	 */
 	private void addToFrame()
 	{
 		this.setJMenuBar(this.setMenu());
@@ -44,53 +50,93 @@ public class View
 		this.addWindowListener(new ViewWindow(this));
 	}
 	
+	/**
+	 * Return a configured JMenuBar
+	 * @return
+	 */
 	private JMenuBar setMenu()
 	{
-		JMenuBar menu = new JMenuBar();
-		
+		//JMenu declarations
 		JMenu file = new JMenu("File");
-		JMenu zoom = new JMenu("Zoom");
+		JMenu view = new JMenu("View");
+		JMenu edit = new JMenu("Edit");
 		
+		// JMenuItem declaration
+		// --> Files
 		JMenuItem newFile = new JMenuItem("New");
 		JMenuItem open = new JMenuItem("Open");
 		JMenuItem save = new JMenuItem("Save");
 		JMenuItem saveAs = new JMenuItem("Save As");
-		JMenuItem document = new JMenuItem("Document Properties");
+		
+		// --> View
 		JMenuItem zoomIn = new JMenuItem("Zoom In");
 		JMenuItem zoomOut = new JMenuItem("Zoom Out");
 		
+		// --> Edit
+		JMenuItem document = new JMenuItem("Document Properties");
+		JMenuItem selectAll = new JMenuItem("Select All");
+		
+		// Action commands
 		newFile.setActionCommand("new");
 		open.setActionCommand("open");
 		save.setActionCommand("save");
 		saveAs.setActionCommand("saveas");
-		document.setActionCommand("document");
+		
 		zoomIn.setActionCommand("zoomin");
 		zoomOut.setActionCommand("zoomOut");
+		
+		document.setActionCommand("document");
+		selectAll.setActionCommand("selectall");
 			
+		// Adding JMenuItem to JMenu
 		file.add(newFile);
 		file.add(open);
 		file.add(save);
 		file.add(saveAs);
-		file.add(document);
-		zoom.add(zoomIn);
-		zoom.add(zoomOut);
+				
+		view.add(zoomIn);
+		view.add(zoomOut);
+		
+		edit.add(selectAll);
+		edit.add(document);
 		
 		//add action listener
 		newFile.addActionListener(new ActionControl(this,tab));
 		open.addActionListener(new ActionControl(this,tab));
 		save.addActionListener(new ActionControl(this,tab));
-		document.addActionListener(new ActionControl(this,tab));
+		
 		zoomIn.addActionListener(new ActionControl(this,tab));
 		zoomOut.addActionListener(new ActionControl(this,tab));
 		saveAs.addActionListener(new ActionControl(this,tab));
 		
+		document.addActionListener(new ActionControl(this,tab));
+		selectAll.addActionListener(new ActionControl(this,tab));
 		
+		// set KeyAccelerator
+		newFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+		open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+		save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK));
+		
+		zoomIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, ActionEvent.CTRL_MASK));
+		zoomOut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, ActionEvent.CTRL_MASK));
+		
+		selectAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+		document.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK | ActionEvent.SHIFT_MASK));
+		
+		// Adding to JMenuBar
+		JMenuBar menu = new JMenuBar();	
 		menu.add(file);
-		menu.add(zoom);
+		menu.add(view);
+		menu.add(edit);
 		
 		return menu;
 	}
 
+	/**
+	 * Return a pre-configured JToolBar
+	 * @return
+	 */
 	private JToolBar setToolbar()
 	{		
 		JButton select = new JButton(new ImageIcon("src/icon/select.png"));
@@ -169,12 +215,19 @@ public class View
 		return toolB;
 	}
 	
-	public void refresh()
+	
+	/**
+	 * Used to revalidate and repaint JFrame
+	 */
+	private void refresh()
 	{
 		this.revalidate();
 		this.repaint();
 	}
 	
+	/**
+	 * Exit the system
+	 */
 	public void close()
 	{
 		System.exit(0);

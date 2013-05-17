@@ -5,13 +5,11 @@ import java.util.*;
 import java.util.regex.*;
 import java.awt.*;
 import java.awt.geom.*;
-import java.awt.geom.Line2D.Double;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
 import javax.xml.parsers.*;
-//import javax.xml.soap.*;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -23,8 +21,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
-
-import controller.MouseControl;
 
 public class DrawingBoard 
 	extends JPanel
@@ -44,8 +40,11 @@ public class DrawingBoard
 	private LinkedList<PolyObj> shapes = new LinkedList<PolyObj>();
 	private LinkedList<PolyObj> selected = new LinkedList<PolyObj>();
 	
-	private PolyObj tempPolyObj = null;
+	private PolyObj shadow = null;
 	
+	/**
+	 * Create a clean drawing board
+	 */
 	public DrawingBoard()
 	{
 		this.fileName = "New file" + (newCount++);
@@ -54,6 +53,10 @@ public class DrawingBoard
 		this.setSize();
 	}
 	
+	/**
+	 * Open SVG file
+	 * @param toRead
+	 */
 	public DrawingBoard(File toRead)
 	{
 		this.toRead = toRead;
@@ -62,15 +65,11 @@ public class DrawingBoard
 		this.defaultSize();
 		this.setSize();
 	}
-	
-	public String getFileName()
-	{
-		if(toRead == null)
-			return fileName;
 		
-		return toRead.getName();
-	}
-	
+	/**
+	 * Get DrawingBoard
+	 * @return
+	 */
 	public JPanel getPanel()
 	{
 		JPanel panel = new JPanel();
@@ -81,8 +80,12 @@ public class DrawingBoard
 	}
 	
 	
+	/********************************************************************************************************/
+	/*                                               Shapes                                                 */
+	/********************************************************************************************************/
+	
 	/**
-	 * Shape
+	 * Group shapes/groups together
 	 */
 	public void group()
 	{
@@ -95,6 +98,9 @@ public class DrawingBoard
 		this.refresh();
 	}
 	
+	/**
+	 * Ungroup grouped shapes/groups
+	 */
 	public void ungroup()
 	{
 		for(int i=0; i<selected.size(); i++)
@@ -104,19 +110,219 @@ public class DrawingBoard
 		
 		this.refresh();
 	}
-	
-	public void selectAll()
+
+	/**
+	 * Delete the selected shape(s)/group(s)
+	 */
+	public void remove()
 	{
-		selected.clear();
 		
-		for(int i=0;i<shapes.size();i++)
+		for(int i=0;i<selected.size();i++)
 		{
-			selected.add(shapes.get(i));
+			this.shapes.remove(selected.get(i));
+		}
+		
+		this.selected.clear();
+		this.refresh();
+	}
+		
+	/**
+	 * Drawing
+	 */
+	
+	/**
+	 * Get the current stroke width
+	 * @return
+	 */
+	public int getStrokeWidth()
+	{
+		return strokeWidth;
+	}
+	
+	/**
+	 * Set the stroke width
+	 */
+	public void setStrokeWidth()
+	{
+		String strWidth = JOptionPane.showInputDialog(this, "Enter strokewidth", Integer.toString(strokeWidth));
+		
+		if(Pattern.matches( "[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*", strWidth))
+			strokeWidth = java.lang.Integer.parseInt(strWidth);
+		else
+			JOptionPane.showMessageDialog(this, "Invalid input detected", "Error", JOptionPane.ERROR_MESSAGE);
+		
+		for(int i=0;i<selected.size();i++)
+		{
+			((PolyObj)selected.get(i)).strokeWidth = strokeWidth;
 		}
 		
 		this.refresh();
+			
 	}
 	
+	/**
+	 * Select the stroke color
+	 */
+	public void selectStroke()
+	{
+		Color temp = null;
+		temp = JColorChooser.showDialog(this,"Select stroke color",stroke);
+		
+		if(temp!= null)
+		{
+			stroke = temp;	
+
+			for(int i=0;i<selected.size();i++)
+			{
+				((PolyObj)selected.get(i)).stroke = stroke;
+			}
+		
+			this.refresh();
+		}
+	}
+	
+	/**
+	 * Get the current stroke color
+	 * @return
+	 */
+	public Color getStroke()
+	{
+		return stroke;
+	}
+	
+	/**
+	 * Select the fill color
+	 */
+	public void selectFill()
+	{
+		Color temp = null;
+		temp = JColorChooser.showDialog(this,"Select fill color",fill);
+		
+		if(temp!=null)
+		{
+			fill = temp;	
+		
+			for(int i=0;i<selected.size();i++)
+			{
+				((PolyObj)selected.get(i)).fill = fill;
+			}
+			
+			this.refresh();
+		}
+	}
+	
+	/**
+	 * Get the current fill color
+	 * @return
+	 */
+	public Color getFill()
+	{
+		return fill;
+	}
+	
+	/**
+	 * Add shape to the list of shapes
+	 * @param toAdd
+	 */
+	public void addShape(PolyObj toAdd)
+	{
+		this.shapes.add(toAdd);
+		
+		this.refresh();
+	}
+
+	/**
+	 * Shift shape(s) or group(s) location
+	 *  
+	 * @param startX
+	 * @param startY
+	 * @param endX
+	 * @param endY
+	 */
+	public void moves(double startX, double startY, double endX, double endY)
+	{
+		//System.out.println(startX);
+		double moveX = endX - startX;
+		double moveY = endY - startY;
+		
+		for(int i=0; i<selected.size(); i++)
+		{
+			PolyObj toMove = selected.get(i);
+			
+			if(toMove.shape instanceof Rectangle2D)
+			{
+				double x = ((Rectangle2D)toMove.shape).getX() + moveX;
+				double y = ((Rectangle2D)toMove.shape).getY() + moveY;
+				double w = ((Rectangle2D)toMove.shape).getWidth();
+				double h = ((Rectangle2D)toMove.shape).getHeight();
+
+				toMove.replaceShape(new Rectangle2D.Double(x,y,w,h));
+				
+				this.refresh();
+			}
+			
+			if(toMove.shape instanceof Ellipse2D)
+			{
+				double x = ((Ellipse2D)toMove.shape).getX() + moveX;
+				double y = ((Ellipse2D)toMove.shape).getY() + moveY;
+				double w = ((Ellipse2D)toMove.shape).getWidth();
+				double h = ((Ellipse2D)toMove.shape).getHeight();
+
+				toMove.replaceShape(new Ellipse2D.Double(x,y,w,h));
+				
+				this.refresh();
+			}
+			
+			if(toMove.shape instanceof Line2D)
+			{
+				double x1 = ((Line2D)toMove.shape).getX1() + moveX;
+				double y1 = ((Line2D)toMove.shape).getY1() + moveY;
+				double x2 = ((Line2D)toMove.shape).getX2() + moveX;
+				double y2 = ((Line2D)toMove.shape).getY2() + moveY;
+
+				toMove.replaceShape(new Line2D.Double(x1,y1,x2,y2));
+				
+				this.refresh();
+			}
+		}
+	}
+		
+	/**
+	 * Get current zoom
+	 * @return
+	 */
+	public int getZoom()
+	{
+		return zoom;
+	}
+	
+	/**
+	 * Set zoom 
+	 * @param zoom
+	 */
+	public void setZoom(int zoom)
+	{
+		this.zoom = zoom;
+		this.setSize();
+		this.refresh();
+	}
+	
+
+
+	/********************************************************************************************************/
+	/*                                              Paint                                                   */
+	/********************************************************************************************************/
+	
+	
+	/********************************************************************************************************/
+	/*                                              Select                                                  */
+	/********************************************************************************************************/
+	
+	/**
+	 * Select a specific shape/group at the point where mouse click is detected
+	 * @param startX
+	 * @param startY
+	 */
 	public void select(double startX, double startY)
 	{
 		this.selected.clear();
@@ -183,7 +389,14 @@ public class DrawingBoard
 			}
 		}
 	}
-	
+		
+	/**
+	 * Select multiple shape/group by dragging the mouse cursor on the drawing board
+	 * @param startX
+	 * @param startY
+	 * @param endX
+	 * @param endY
+	 */
 	public void select(double startX, double startY, double endX, double endY)
 	{
 		this.selected.clear();
@@ -269,231 +482,53 @@ public class DrawingBoard
 		
 	}
 	
-	public void remove()
+	/**
+	 * Select everything on the drawing board
+	 */
+	public void selectAll()
 	{
+		selected.clear();
 		
-		for(int i=0;i<selected.size();i++)
+		for(int i=0;i<shapes.size();i++)
 		{
-			this.shapes.remove(selected.get(i));
+			selected.add(shapes.get(i));
 		}
 		
-		this.selected.clear();
 		this.refresh();
 	}
 	
+	/**
+	 * Get the list of selected shapes
+	 * @return
+	 */
+	public LinkedList<PolyObj> getSelectedList()
+	{
+		return selected;
+	}
+	
+	/**
+	 * Set drag shadow
+	 * @param temp
+	 */
+	public void setTempPolyObj(PolyObj temp)
+	{
+		shadow = temp;
+		
+		this.refresh();
+	}
+	
+	/**
+	 * Deselect all selected shape(s)/group(s)
+	 */
 	public void deselect()
 	{
 		selected.clear();
 		refresh();
 	}
 	
-	/**
-	 * Drawing
-	 */
-	public int getStrokeWidth()
-	{
-		return strokeWidth;
-	}
-	
-	public void setStrokeWidth()
-	{
-		String strWidth = JOptionPane.showInputDialog(this, "Enter strokewidth", "5");
-		
-		if(Pattern.matches( "[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*", strWidth))
-			strokeWidth = java.lang.Integer.parseInt(strWidth);
-		else
-			JOptionPane.showMessageDialog(this, "Invalid input detected", "Error", JOptionPane.ERROR_MESSAGE);
-		
-		for(int i=0;i<selected.size();i++)
-		{
-			((PolyObj)selected.get(i)).strokeWidth = strokeWidth;
-		}
-		
-		this.refresh();
-			
-	}
-	
-	public void selectStroke()
-	{
-		Color temp = null;
-		temp = JColorChooser.showDialog(this,"Select stroke color",temp);
-		
-		if(temp!= null)
-		{
-			stroke = temp;	
-
-			for(int i=0;i<selected.size();i++)
-			{
-				((PolyObj)selected.get(i)).stroke = stroke;
-			}
-		
-			this.refresh();
-		}
-	}
-	
-	public Color getStroke()
-	{
-		return stroke;
-	}
-	
-	public void selectFill()
-	{
-		Color temp = null;
-		temp = JColorChooser.showDialog(this,"Select fill color",temp);
-		
-		if(temp!=null)
-		{
-			fill = temp;	
-		
-			for(int i=0;i<selected.size();i++)
-			{
-				((PolyObj)selected.get(i)).fill = fill;
-			}
-			
-			this.refresh();
-		}
-	}
-	
-	public Color getFill()
-	{
-		return fill;
-	}
-	
-	public void addShape(PolyObj toAdd)
-	{
-		this.shapes.add(toAdd);
-		
-		this.refresh();
-	}
-
-	public void moves(double startX, double startY, double endX, double endY)
-	{
-		//System.out.println(startX);
-		double moveX = endX - startX;
-		double moveY = endY - startY;
-		
-		for(int i=0; i<selected.size(); i++)
-		{
-			PolyObj toMove = selected.get(i);
-			
-			if(toMove.shape instanceof Rectangle2D)
-			{
-				double x = ((Rectangle2D)toMove.shape).getX() + moveX;
-				double y = ((Rectangle2D)toMove.shape).getY() + moveY;
-				double w = ((Rectangle2D)toMove.shape).getWidth();
-				double h = ((Rectangle2D)toMove.shape).getHeight();
-
-				toMove.replaceShape(new Rectangle2D.Double(x,y,w,h));
-				
-				this.refresh();
-			}
-			
-			if(toMove.shape instanceof Ellipse2D)
-			{
-				double x = ((Ellipse2D)toMove.shape).getX() + moveX;
-				double y = ((Ellipse2D)toMove.shape).getY() + moveY;
-				double w = ((Ellipse2D)toMove.shape).getWidth();
-				double h = ((Ellipse2D)toMove.shape).getHeight();
-
-				toMove.replaceShape(new Ellipse2D.Double(x,y,w,h));
-				
-				this.refresh();
-			}
-			
-			if(toMove.shape instanceof Line2D)
-			{
-				double x1 = ((Line2D)toMove.shape).getX1() + moveX;
-				double y1 = ((Line2D)toMove.shape).getY1() + moveY;
-				double x2 = ((Line2D)toMove.shape).getX2() + moveX;
-				double y2 = ((Line2D)toMove.shape).getY2() + moveY;
-
-				toMove.replaceShape(new Line2D.Double(x1,y1,x2,y2));
-				
-				this.refresh();
-			}
-		}
-	}
-	
-	/**
-	 * Size 
-	 */
-	
-	public int getZoom()
-	{
-		return zoom;
-	}
-	
-	public void setZoom(int zoom)
-	{
-		this.zoom = zoom;
-		this.setSize();
-		this.refresh();
-	}
-	
-	public void defaultSize()
-	{
-		int maxX = 0;
-		int maxY = 0;
-		
-		for(int i=0;i<shapes.size();i++)
-		{			
-			if(shapes.get(i).shape instanceof Rectangle2D)
-			{
-				maxX = (int)((Rectangle2D.Double)shapes.get(i).shape).getMaxX();
-				maxY = (int)((Rectangle2D.Double)shapes.get(i).shape).getMaxY();
-			}
-			
-			if(shapes.get(i).shape instanceof Ellipse2D)
-			{
-				maxX = (int)((Ellipse2D.Double)shapes.get(i).shape).getMaxX();
-				maxY = (int)((Ellipse2D.Double)shapes.get(i).shape).getMaxY();
-			}
-			
-			if(shapes.get(i).shape instanceof Line2D)
-			{
-				maxX = (int)((Line2D.Double)shapes.get(i).shape).getX1();
-				
-				if(maxX < (int)((Line2D.Double)shapes.get(i).shape).getX2())
-					maxX = (int)((Line2D.Double)shapes.get(i).shape).getX2();
-				
-				maxY = (int)((Line2D.Double)shapes.get(i).shape).getY1();
-								
-				if(maxY < (int)((Line2D.Double)shapes.get(i).shape).getY2())
-					maxY = (int)((Line2D.Double)shapes.get(i).shape).getY2();
-			}
-			
-			if(size.getWidth() > maxX)
-				maxX = (int)size.getWidth();
-			if(size.getHeight() > maxY)
-				maxY = (int)size.getHeight();
-			
-			size = new Dimension(maxX,maxY);
-		}
-		
-		size = new Dimension(maxX+100,maxY+100);
-	}
-
-	public void setSize()
-	{
-		Dimension bSize = new Dimension((int)(size.getWidth()*zoom/100),(int)(size.getHeight()*zoom/100));
-		
-		this.setPreferredSize(bSize);
-		this.refresh();
-	}
-	
-	public void refresh()
-	{
-		this.revalidate();
-		this.repaint();
-	}
-	
-	/**
-	 * Paint
-	 */
-	public void setTempPolyObj(PolyObj temp)
-	{
-		tempPolyObj = temp;
-	}
+	/********************************************************************************************************/
+	/*                                               Paint                                                  */
+	/********************************************************************************************************/
 	
 	public void paintComponent(Graphics gg)
 	{
@@ -528,13 +563,14 @@ public class DrawingBoard
 		
 		this.drawSelected(g);		
 		
-		if(tempPolyObj != null){
-		    g.setColor(tempPolyObj.fill);
-			g.fill(tempPolyObj.shape);
+		if(shadow != null)
+		{
+		    g.setColor(shadow.fill);
+			g.fill(shadow.shape);
 
-			g.setStroke(new BasicStroke(tempPolyObj.strokeWidth));
-		    g.setColor(tempPolyObj.stroke);
-	        g.draw(tempPolyObj.shape);
+			g.setStroke(new BasicStroke(shadow.strokeWidth));
+		    g.setColor(shadow.stroke);
+	        g.draw(shadow.shape);
 		}
 		
 	}
@@ -729,11 +765,92 @@ public class DrawingBoard
 		}
 		
 	}
+			
+	/**
+	 * Revalidate and repaint drawing board
+	 */
+	private void refresh()
+	{
+		this.revalidate();
+		this.repaint();
+	}
+	
+	/********************************************************************************************************/
+	/*                                          Document Properties                                         */
+	/********************************************************************************************************/
 	
 	/**
-	 * File Handling
+	 * Returns the file name of current SVG drawing board
+	 * @return
 	 */
+	public String getFileName()
+	{
+		if(toRead == null)
+			return fileName;
+		
+		return toRead.getName();
+	}
 	
+	/**
+	 * Initialize drawing board to the default size required to display all elements
+	 */
+	public void defaultSize()
+	{
+		int maxX = 0;
+		int maxY = 0;
+		
+		for(int i=0;i<shapes.size();i++)
+		{			
+			if(shapes.get(i).shape instanceof Rectangle2D)
+			{
+				maxX = (int)((Rectangle2D.Double)shapes.get(i).shape).getMaxX();
+				maxY = (int)((Rectangle2D.Double)shapes.get(i).shape).getMaxY();
+			}
+			
+			if(shapes.get(i).shape instanceof Ellipse2D)
+			{
+				maxX = (int)((Ellipse2D.Double)shapes.get(i).shape).getMaxX();
+				maxY = (int)((Ellipse2D.Double)shapes.get(i).shape).getMaxY();
+			}
+			
+			if(shapes.get(i).shape instanceof Line2D)
+			{
+				maxX = (int)((Line2D.Double)shapes.get(i).shape).getX1();
+				
+				if(maxX < (int)((Line2D.Double)shapes.get(i).shape).getX2())
+					maxX = (int)((Line2D.Double)shapes.get(i).shape).getX2();
+				
+				maxY = (int)((Line2D.Double)shapes.get(i).shape).getY1();
+								
+				if(maxY < (int)((Line2D.Double)shapes.get(i).shape).getY2())
+					maxY = (int)((Line2D.Double)shapes.get(i).shape).getY2();
+			}
+			
+			if(size.getWidth() > maxX)
+				maxX = (int)size.getWidth();
+			if(size.getHeight() > maxY)
+				maxY = (int)size.getHeight();
+			
+			size = new Dimension(maxX,maxY);
+		}
+		
+		size = new Dimension(maxX+100,maxY+100);
+	}
+
+	/**
+	 * Set current board size
+	 */
+	private void setSize()
+	{
+		Dimension bSize = new Dimension((int)(size.getWidth()*zoom/100),(int)(size.getHeight()*zoom/100));
+		
+		this.setPreferredSize(bSize);
+		this.refresh();
+	}
+	
+	/**
+	 * Document properties
+	 */
 	public void document()
 	{
 		JTextField wField = new JTextField(5);
@@ -768,10 +885,20 @@ public class DrawingBoard
 		
 	}
 	
+	/********************************************************************************************************/
+	/*                                            File Handling                                             */
+	/********************************************************************************************************/
+	
+	
+	/********************************************************************************************************/
+	/*                                             File Handling                                            */
+	/********************************************************************************************************/
+	
+	/**
+	 * Save as
+	 */	
 	public void saveas()
 	{
-		File toWrite = null;
-		
 		JFileChooser sv = new JFileChooser(System.getProperty("user.home"));
 		
 		sv.setFileFilter
@@ -790,171 +917,38 @@ public class DrawingBoard
 			}
 		);
 		
-		if(sv.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
-			return;
-			
-		toWrite = sv.getSelectedFile();
-				
-		try
+		if(sv.showSaveDialog(this) == JFileChooser.APPROVE_OPTION)
 		{
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder parser = factory.newDocumentBuilder();
-			Document document = parser.newDocument();
+			File toWrite = sv.getSelectedFile();
 			
-			Element svgElement = document.createElement("svg");
-			svgElement.setAttribute("width", size.getWidth()+"px");
-			svgElement.setAttribute("height", size.getHeight()+"px");
-			svgElement.setAttribute("version","1.1");
-			svgElement.setAttribute("xmlns","http://www.w3.org/2000/svg");
-			
-			Node svgNode = svgElement;
-			
-			document.appendChild(svgNode);
-			
-			for(int i=0; i<shapes.size(); i++)
-			{
-				if(shapes.get(i).shape instanceof Rectangle2D)
-				{
-					Rectangle2D rect = (Rectangle2D) shapes.get(i).shape;
-					
-					Element rectElement = document.createElement("rect");
-					rectElement.setAttribute("x", String.valueOf((int)rect.getX()));
-					
-					rectElement.setAttribute("y", String.valueOf((int)rect.getY()));
-					rectElement.setAttribute("width", (int)rect.getWidth()+"px");
-					rectElement.setAttribute("height", (int)rect.getHeight()+"px");
-					
-					if(shapes.get(i).fill!=null)
-					{
-						rectElement.setAttribute("fill", String.format("#%02x%02x%02x",shapes.get(i).fill.getRed(),shapes.get(i).fill.getGreen(),shapes.get(i).fill.getBlue()));
-					}
-					if(shapes.get(i).stroke!=null)
-					{
-						rectElement.setAttribute("stroke", String.format("#%02x%02x%02x",shapes.get(i).stroke.getRed(),shapes.get(i).stroke.getGreen(),shapes.get(i).stroke.getBlue()));
-					}
-					if(shapes.get(i).strokeWidth > 0)
-					{
-						rectElement.setAttribute("stroke-width", shapes.get(i).strokeWidth+"px");
-					}
-					
-					svgNode.appendChild(rectElement);
-				}
-				
-				else if(shapes.get(i).shape instanceof Ellipse2D)
-				{
-					Ellipse2D circle = (Ellipse2D)shapes.get(i).shape;
-					
-					int cx = (int)(circle.getX() + circle.getWidth()/2);
-					int cy = (int)(circle.getY() + circle.getWidth()/2);
-					
-					Element circleElement = document.createElement("circle");
-					circleElement.setAttribute("cx", String.valueOf((int)cx));
-					circleElement.setAttribute("cy", String.valueOf((int)cy));
-					circleElement.setAttribute("r", (int)circle.getWidth()/2+"px");
-					
-					if(shapes.get(i).fill!=null)
-					{
-						circleElement.setAttribute("fill", String.format("#%02x%02x%02x",shapes.get(i).fill.getRed(),shapes.get(i).fill.getGreen(),shapes.get(i).fill.getBlue()));
-					}
-					
-					if(shapes.get(i).stroke!=null)
-					{
-						circleElement.setAttribute("stroke", String.format("#%02x%02x%02x",shapes.get(i).stroke.getRed(),shapes.get(i).stroke.getGreen(),shapes.get(i).stroke.getBlue()));
-					}
-					
-					if(shapes.get(i).strokeWidth > 0)
-					{
-						circleElement.setAttribute("stroke-width", shapes.get(i).strokeWidth+"px");
-					}
-					
-					svgNode.appendChild(circleElement);
-				}
-				
-				else if(shapes.get(i).shape instanceof Line2D)
-				{
-					Line2D line = (Line2D)shapes.get(i).shape;
-					
-					Element lineElement = document.createElement("line");
-					lineElement.setAttribute("x1", String.valueOf((int)line.getX1()));
-					lineElement.setAttribute("x2", String.valueOf((int)line.getX2()));
-					lineElement.setAttribute("y1", String.valueOf((int)line.getY1()));
-					lineElement.setAttribute("y2", String.valueOf((int)line.getY2()));
-					
-					if(shapes.get(i).stroke!=null)
-					{
-						lineElement.setAttribute("stroke", String.format("#%02x%02x%02x",shapes.get(i).stroke.getRed(),shapes.get(i).stroke.getGreen(),shapes.get(i).stroke.getBlue()));
-					}
-					
-					if(shapes.get(i).strokeWidth > 0)
-					{
-						lineElement.setAttribute("stroke-width", shapes.get(i).strokeWidth+"px");
-					}
-					svgNode.appendChild(lineElement);
-				}
-			}
-			
-			DOMSource source=new DOMSource(document);
-
-			StreamResult result=new StreamResult(toWrite);
-			TransformerFactory transformerFactory=TransformerFactory.newInstance();
-			Transformer transformer=transformerFactory.newTransformer();
-
-			transformer.setOutputProperty(OutputKeys.STANDALONE,"no");
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC,"-//W3C//DTD SVG 1.1//EN");
-			transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd");
-
-			transformer.transform(source, result);
-			fileName = toWrite.getName();
-		}
-		
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-		
+			if(toWrite.getPath().toLowerCase().endsWith("svg"))
+				saveToFile(toWrite);
+			else
+				saveToFile(new File(toWrite.getPath()+".svg"));
+		}				
 	}
 	
+	
+	/**
+	 * Save
+	 * Overwrite file if board is currently editing an SVG file
+	 * 
+	 */
 	public void save()
 	{
-		File toWrite = null;
-		
-		if(toRead != null)
-			toWrite = toRead;
+		if(toRead == null)
+			saveas();	
 		else
-		{
-			JFileChooser sv = new JFileChooser(System.getProperty("user.home"));
-			
-			sv.setFileFilter
-			(
-				new javax.swing.filechooser.FileFilter()
-				{
-					public boolean accept(File f)
-					{
-						return (f.getName().toLowerCase()).endsWith("svg")||f.isDirectory();
-					}
-					
-					public String getDescription()
-					{
-						return "SVG file";
-					}
-				}
-			);
-			
-			if(sv.showSaveDialog(this) == JFileChooser.APPROVE_OPTION)
-			{
-				toWrite = sv.getSelectedFile();
-				System.out.println(toWrite.getPath());
-			}
-			
-			
-		}
-			
-			
-			
+			saveToFile(toRead);
+	}
+	
+	
+	/**
+	 * Write all shapes and document properties to file
+	 * @param toWrite
+	 */
+	private void saveToFile(File toWrite)
+	{
 		try
 		{
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -1075,7 +1069,11 @@ public class DrawingBoard
 			e.printStackTrace();
 		}
 	}
-	
+		
+	/**
+	 * Read SVG file
+	 * @param f
+	 */
 	private void read(File f)
 	{
 		try
@@ -1310,10 +1308,11 @@ public class DrawingBoard
 		}
 	}
 	
-	public LinkedList<PolyObj> getSelectedList(){
-		return selected;
-	}
-	
+	/**
+	 * Convert the units to integer
+	 * @param input
+	 * @return
+	 */
 	private int unitConvert(String input)
 	{
 		String part1="", part2="";
@@ -1356,4 +1355,5 @@ public class DrawingBoard
 				
 		return (int)result; 
 	}
+
 }
