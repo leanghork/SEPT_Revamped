@@ -52,7 +52,7 @@ public class DrawingBoard
 	{
 		this.fileName = "New file" + (newCount++);
 		
-		this.size = new Dimension(1000,600);
+		this.size = new Dimension(700,700);
 		this.setSize();
 	}
 	
