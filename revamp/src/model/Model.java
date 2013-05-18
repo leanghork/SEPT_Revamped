@@ -47,7 +47,10 @@ public class Model
 			}
 		}
 		
-		this.setSelectedIndex(0);
+		if(this.getTabCount() != 0)
+			this.setSelectedIndex(0);
+		else
+			this.openNew();
 	}
 	
 	public void setOption(int opt)

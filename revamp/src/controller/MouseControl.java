@@ -19,7 +19,6 @@ public class MouseControl implements MouseListener, MouseMotionListener
 		this.theBoard = theBoard;
 	}
 	
-	@Override
 	public void mousePressed(MouseEvent e) 
 	{
 		startX = e.getX()-50;
@@ -27,11 +26,8 @@ public class MouseControl implements MouseListener, MouseMotionListener
 		
 		tempX = e.getX()-50;
 		tempY = e.getY()-50;
-		
-		//System.out.println(startX);
 	}
 
-	@Override
 	public void mouseReleased(MouseEvent e) 
 	{
 		endX = e.getX()-50;
@@ -42,9 +38,11 @@ public class MouseControl implements MouseListener, MouseMotionListener
 			case Model.select:
 			{
 				theBoard.setTempPolyObj(null);
-				if(theBoard.getSelectedList().size()==0){
+				if(theBoard.getSelectedCount() == 0)
+				{
 					theBoard.select(startX, startY,endX, endY);
 				}
+				
 				tab.refresh();
 			}	
 			break;
@@ -98,7 +96,6 @@ public class MouseControl implements MouseListener, MouseMotionListener
 		}
 	}
 	
-	@Override
 	public void mouseDragged(MouseEvent e) 
 	{
 		switch(tab.currentOption())
@@ -107,14 +104,20 @@ public class MouseControl implements MouseListener, MouseMotionListener
 			{
 				theBoard.setTempPolyObj(null);
 				
-				endX = e.getX()-50;
-				endY = e.getY()-50;
-				theBoard.moves(tempX,tempY,endX, endY);
-				tempX = endX;
-				tempY = endY;
+				if(theBoard.getAnchor() == 0)
+				{
+					endX = e.getX()-50;
+					endY = e.getY()-50;
+					theBoard.moves(tempX,tempY,endX, endY);
+					tempX = endX;
+					tempY = endY;
+				}
+				else if(theBoard.getAnchor() > 0 && theBoard.getAnchor() <9)
+				{
+					theBoard.resizeSelected(e.getX()-50, e.getY()-50);
+				}		
 				
-				// drag shadow
-				if(theBoard.getSelectedList().size()==0)
+				if(theBoard.getSelectedCount() == 0)
 				{
 					double tempSX, tempSY, tempEX, tempEY;
 					
@@ -125,13 +128,13 @@ public class MouseControl implements MouseListener, MouseMotionListener
 					
 					theBoard.setTempPolyObj(new PolyObj(new Rectangle2D.Double(tempSX,tempSY,tempEX-tempSX,tempEY-tempSY),0,new Color(0,0,255,30),null));
 				}
+						
 				tab.refresh();
 			}	
 			break;
 		}
 	}
 	
-	@Override
 	public void mouseClicked(MouseEvent e) 
 	{
 		switch(tab.currentOption())
@@ -146,8 +149,19 @@ public class MouseControl implements MouseListener, MouseMotionListener
 		}
 	}
 
-	@Override
-	public void mouseMoved(MouseEvent e) {
+	public void mouseMoved(MouseEvent e) 
+	{
+		if(theBoard.getSelectedCount() > 0)
+		{
+			double currentX = e.getX() - 50;
+			double currentY = e.getY() - 50;
+			
+			theBoard.trackMouse(currentX, currentY);
+		}
+	}
+
+	public void mouseEntered(MouseEvent e) 
+	{
 		switch(tab.currentOption())
 		{
 			case Model.select:
@@ -156,27 +170,22 @@ public class MouseControl implements MouseListener, MouseMotionListener
 			}	
 			break;
 			
-			default:
+			case Model.circle:
+			case Model.rectangle:
+			case Model.line:
 			{
 				theBoard.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-			}	
-			break;	
+			}
+			break;
 			
+			default:	
+			break;	
 		}
 
 	}
 
-	
-
-	@Override
-	public void mouseEntered(MouseEvent e) 
+	public void mouseExited(MouseEvent e) 
 	{
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
 		// TODO Auto-generated method stub
 
 	}

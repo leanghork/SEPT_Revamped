@@ -44,6 +44,8 @@ public class DrawingBoard
 	
 	private PolyObj shadow = null;
 	private PolyObj group = null;
+	
+	private int point = 0;
 		
 	/**
 	 * Create a clean drawing board
@@ -138,16 +140,35 @@ public class DrawingBoard
 	{
 		String strWidth = JOptionPane.showInputDialog(this, "Enter strokewidth", Integer.toString(strokeWidth));
 		
-		if(Pattern.matches( "[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*", strWidth))
-			strokeWidth = java.lang.Integer.parseInt(strWidth);
-		else
-			JOptionPane.showMessageDialog(this, "Invalid input detected", "Error", JOptionPane.ERROR_MESSAGE);
+		if(strWidth == null)
+			return;
 		
-		for(int i=0;i<selected.size();i++)
+		else if(Pattern.matches( "[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*", strWidth))
 		{
-			((PolyObj)selected.get(i)).strokeWidth = strokeWidth;
+			strokeWidth = java.lang.Integer.parseInt(strWidth);
+		
+		
+			this.removeSelectedDuplicate();
+			for(int i=0;i<selected.size();i++)
+			{
+				if(selected.get(i).checkGroup() == 0)
+					((PolyObj)selected.get(i)).strokeWidth = strokeWidth;
+				else
+				{
+					for(int j=0; j<shapes.size();j++)
+					{
+						if(selected.get(i).checkGroup() == shapes.get(j).checkGroup())
+						{
+							shapes.get(j).strokeWidth = strokeWidth;
+						}
+					}
+				}
+			}
 		}
 		
+		else
+			JOptionPane.showMessageDialog(this, "Invalid input detected", "Error", JOptionPane.ERROR_MESSAGE);	
+			
 		this.refresh();
 			
 	}
@@ -164,9 +185,21 @@ public class DrawingBoard
 		{
 			stroke = temp;	
 
+			this.removeSelectedDuplicate();
 			for(int i=0;i<selected.size();i++)
 			{
-				((PolyObj)selected.get(i)).stroke = stroke;
+				if(selected.get(i).checkGroup() == 0)
+					((PolyObj)selected.get(i)).stroke = stroke;
+				else
+				{
+					for(int j=0; j<shapes.size();j++)
+					{
+						if(selected.get(i).checkGroup() == shapes.get(j).checkGroup())
+						{
+							shapes.get(j).stroke = stroke;
+						}
+					}
+				}
 			}
 		
 			this.refresh();
@@ -194,9 +227,21 @@ public class DrawingBoard
 		{
 			fill = temp;	
 		
+			this.removeSelectedDuplicate();
 			for(int i=0;i<selected.size();i++)
 			{
-				((PolyObj)selected.get(i)).fill = fill;
+				if(selected.get(i).checkGroup() == 0)
+					((PolyObj)selected.get(i)).fill = fill;
+				else
+				{
+					for(int j=0; j<shapes.size();j++)
+					{
+						if(selected.get(i).checkGroup() == shapes.get(j).checkGroup())
+						{
+							shapes.get(j).fill = fill;
+						}
+					}
+				}
 			}
 			
 			this.refresh();
@@ -366,7 +411,218 @@ public class DrawingBoard
 	/*                                              Paint                                                   */
 	/********************************************************************************************************/
 	
+	public void resizeSelected(double endX, double endY)
+	{
+		System.out.println("point : "+point);
+		this.removeSelectedDuplicate();
+		
+		switch(point)
+		{
+			case 1:
+			{
+				for(int i=0; i<selected.size();i++)
+				{
+					if(selected.get(i).checkGroup() == 0)
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = endX;
+							double minY = endY;
+							double maxX = theShape.getMaxX();
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+							
+							if(width < 0)
+							{
+								double temp = minX;
+								minX = maxX;
+								maxX = temp;
+								
+								width = Math.abs(width);
+							}
+							
+							if(height < 0)
+							{
+								double temp = minY;
+								minY = maxY;
+								maxY = temp;
+								
+								height = Math.abs(height);
+							}
+							
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+							
+							this.refresh();
+						}
+					}
+				}
+			}
+				break;
+			case 2:
+				break;
+			case 3:
+				break;
+			case 4:
+				break;
+			case 5:
+				break;
+			case 6:
+				break;
+			case 7:
+				break;
+			case 8:
+				break;
+			default:
+				break;
+		}
+	}
 	
+	public void trackMouse(double X, double Y)
+	{
+		point = 0;
+		this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		this.removeSelectedDuplicate();
+		
+		Rectangle2D.Double cursor = new Rectangle2D.Double(X - 2.5, Y - 2.5, 5, 5);
+		
+		for(int i=0;i<selected.size();i++)
+		{
+			
+			
+			if(selected.get(i).checkGroup() == 0)
+			{
+				if(selected.get(i).shape instanceof Line2D)
+				{
+					Line2D theSelected = (Line2D)selected.get(i).shape;
+					
+					double x1, x2, y1,y2;
+									
+					x1 = theSelected.getX1() < theSelected.getX2() ? theSelected.getX1() : theSelected.getX2();
+					x2 = theSelected.getX1() > theSelected.getX2() ? theSelected.getX1() : theSelected.getX2();
+					
+					y1 = theSelected.getX1() < theSelected.getX2() ? theSelected.getY1() : theSelected.getY2();
+					y2 = theSelected.getX1() > theSelected.getX2() ? theSelected.getY1() : theSelected.getY2();
+
+					if(cursor.intersects(new Rectangle2D.Double(x1-3.5, y1-3.5, 7, 7)))
+					{
+						point = 1;
+						
+						if(y1 > y2)
+							this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
+						else
+							this.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x2-3.5, y2-3.5, 7, 7)))
+					{						
+						if(y1 > y2)
+						{
+							point = 3;
+							this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
+						}
+						else
+						{
+							point = 2;
+							this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
+						}
+					}
+				}
+				
+				if(selected.get(i).shape instanceof Rectangle2D)
+				{
+					Rectangle2D theSelected = (Rectangle2D)selected.get(i).shape;
+					
+					double x = theSelected.getX() - 5 - selected.get(i).strokeWidth/2;
+					double y = theSelected.getY() - 5 - selected.get(i).strokeWidth/2;
+					double width = theSelected.getWidth() + 10 + selected.get(i).strokeWidth;
+					double height = theSelected.getHeight() + 10 + selected.get(i).strokeWidth;
+					
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 ,7 ,7)))
+					{
+						point = 1;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 ,7 ,7)))
+					{
+						point = 2;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height,7 ,7)))
+					{
+						point = 3;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height,7 ,7)))
+					{
+						point = 4;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width/2 ,y-3.5 ,7 ,7)))
+					{
+						point = 5;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height/2 ,7 ,7)))
+					{
+						point = 6;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width/2 ,y-3.5 + height,7 ,7)))
+					{
+						point = 7;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height/2,7 ,7)))
+					{
+						point = 8;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+					}
+				}
+				
+				if(selected.get(i).shape instanceof Ellipse2D)
+				{
+					Ellipse2D theSelected = (Ellipse2D)selected.get(i).shape;
+					
+					double x = theSelected.getX() - 5 - selected.get(i).strokeWidth/2;
+					double y = theSelected.getY() - 5 - selected.get(i).strokeWidth/2;
+					double width = theSelected.getWidth() + 10 + selected.get(i).strokeWidth;
+					double height = theSelected.getHeight() + 10 + selected.get(i).strokeWidth;
+					
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 ,7 ,7)))
+					{
+						point = 1;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 ,7 ,7)))
+					{
+						point = 2;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height,7 ,7)))
+					{
+						point = 3;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+					}
+					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height,7 ,7)))
+					{
+						point = 4;
+						this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
+					}
+				}
+				
+			}
+			
+		}
+	}
+	
+	public int getAnchor()
+	{
+		return point;
+	}
 	/********************************************************************************************************/
 	/*                                              Select                                                  */
 	/********************************************************************************************************/
@@ -461,9 +717,9 @@ public class DrawingBoard
 	 * Get the list of selected shapes
 	 * @return
 	 */
-	public LinkedList<PolyObj> getSelectedList()
+	public int getSelectedCount()
 	{
-		return selected;
+		return selected.size();
 	}
 	
 	
