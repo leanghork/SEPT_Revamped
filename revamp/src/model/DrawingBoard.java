@@ -52,7 +52,7 @@ public class DrawingBoard
 	{
 		this.fileName = "New file" + (newCount++);
 		
-		this.size = new Dimension(500,500);
+		this.size = new Dimension(1000,600);
 		this.setSize();
 	}
 	
@@ -496,28 +496,27 @@ public class DrawingBoard
 	private MaxMinValue getMinMax(PolyObj selects)
 	{
 		double minX=0, maxX=0, minY=0, maxY=0;
-		
-		for(int i=0; i<shapes.size(); i++)
+		boolean started = false;
+				
+		for(int i=shapes.size()-1; i>=0; i--)
 		{
 			PolyObj toCheck = shapes.get(i);
 			
 			if(toCheck.checkGroup() == selects.checkGroup())
 			{
+				
 				if(toCheck.shape instanceof Line2D)
 				{
 					Line2D line = (Line2D)toCheck.shape;
 					
-					if(i==0)
+					if(!started)
 					{							
 						minX = line.getX1() < line.getX2() ? line.getX1() : line.getX2();
 						maxX = line.getX1() > line.getX2() ? line.getX1() : line.getX2();
 						minY = line.getY1() < line.getY2() ? line.getY1() : line.getY2();
 						minY = line.getY1() > line.getY2() ? line.getY1() : line.getY2();
-					
-						System.out.println("minX "+minX);
-						System.out.println("maxX "+maxX);
-						System.out.println("minY "+minY);
-						System.out.println("maxY "+maxY);
+						
+						started = true;
 					}
 					else
 					{
@@ -539,12 +538,14 @@ public class DrawingBoard
 				{
 					Rectangle2D theShape = (Rectangle2D)toCheck.shape;
 					
-					if(i==0)
+					if(!started)
 					{
 						minX = theShape.getMinX();
 						minY = theShape.getMinY();
 						maxX = theShape.getMaxX();
 						maxY = theShape.getMaxY();
+						
+						started = true;
 					}
 					else
 					{
@@ -560,12 +561,14 @@ public class DrawingBoard
 				{
 					Ellipse2D theShape = (Ellipse2D)toCheck.shape;
 					
-					if(i==0)
+					if(!started)
 					{
 						minX = theShape.getMinX();
 						minY = theShape.getMinY();
 						maxX = theShape.getMaxX();
 						maxY = theShape.getMaxY();
+						
+						started = true;
 					}
 					else
 					{
@@ -620,11 +623,12 @@ public class DrawingBoard
 					if( !shapes.get(j).equals(selected.get(i)) && shapes.get(j).checkGroup() == selected.get(i).checkGroup())
 						shapes.get(j).group(gID);
 				}
-				
 				selected.get(i).group(gID);				
 			}
 			else
+			{
 				selected.get(i).group(gID);
+			}
 		}
 		
 		if(!selected.isEmpty())
@@ -647,18 +651,21 @@ public class DrawingBoard
 
 		for(int i=selected.size()-1; i>=0 ; i--)
 		{
-			for(int j=0; j<shapes.size(); j++)
+			if(selected.get(i).checkGroup() != 0)
 			{
-				if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
+				for(int j=0; j<shapes.size(); j++)
 				{
-					shapes.get(j).ungroup();
-					
-					if(!selected.contains(shapes.get(j)))
-						selected.add(shapes.get(j));
+					if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
+					{
+						shapes.get(j).ungroup();
+						
+						if(!selected.contains(shapes.get(j)))
+							selected.add(shapes.get(j));
+					}
 				}
+				
+				selected.get(i).ungroup();
 			}
-			
-			selected.get(i).ungroup();
 		}
 		
 		this.refresh();
@@ -667,16 +674,11 @@ public class DrawingBoard
 	private void removeSelectedDuplicate()
 	{
 		for(int i=0; i<selected.size();i++)
-		{
-			System.out.println("check selected" + i);
-			
+		{			
 			for(int j=selected.size()-1; j>i; j--)
 			{
 				if(selected.get(j).checkGroup()!=0 && selected.get(j).checkGroup() == selected.get(i).checkGroup())
-				{
-					System.out.println("selected" + j);
 					selected.remove(j);
-				}
 			}
 		}
 	}
@@ -812,7 +814,7 @@ public class DrawingBoard
 				double minX = value.minX;
 				double maxY = value.maxY;
 				double minY = value.minY;
-				
+								
 				group = new PolyObj(new Rectangle2D.Double(minX, minY, maxX-minX, maxY-minY),0,new Color(0,0,255,50),null);
 				
 				double x = value.minX - 5;
