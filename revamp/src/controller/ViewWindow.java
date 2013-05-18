@@ -41,7 +41,6 @@ public class ViewWindow
 	
 	public void windowIconified(WindowEvent e)
 	{
-		
 	}
 	
 	public void windowDeiconified(WindowEvent e)

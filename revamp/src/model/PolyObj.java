@@ -42,7 +42,10 @@ public class PolyObj
 	public void ungroup()
 	{
 		if(groupID.isEmpty())
+		{
+			System.out.println("Empty");
 			return;
+		}
 		
 		groupID.removeLast();
 	}

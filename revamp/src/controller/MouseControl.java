@@ -106,13 +106,24 @@ public class MouseControl implements MouseListener, MouseMotionListener
 			case Model.select:
 			{
 				theBoard.setTempPolyObj(null);
+				
 				endX = e.getX()-50;
 				endY = e.getY()-50;
 				theBoard.moves(tempX,tempY,endX, endY);
 				tempX = endX;
 				tempY = endY;
-				if(theBoard.getSelectedList().size()==0){
-					theBoard.setTempPolyObj(new PolyObj(new Rectangle2D.Double(startX,startY,endX-startX,endY-startY),1,new Color(0,0,255,30),Color.BLACK));
+				
+				// drag shadow
+				if(theBoard.getSelectedList().size()==0)
+				{
+					double tempSX, tempSY, tempEX, tempEY;
+					
+					tempSX = startX < endX ? startX : endX;
+					tempSY = startY < endY ? startY : endY;
+					tempEX = startX > endX ? startX : endX;
+					tempEY = startY > endY ? startY : endY;
+					
+					theBoard.setTempPolyObj(new PolyObj(new Rectangle2D.Double(tempSX,tempSY,tempEX-tempSX,tempEY-tempSY),0,new Color(0,0,255,30),null));
 				}
 				tab.refresh();
 			}	
