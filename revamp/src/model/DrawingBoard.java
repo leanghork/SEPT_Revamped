@@ -83,71 +83,6 @@ public class DrawingBoard
 		return panel;
 	}
 	
-	
-	/********************************************************************************************************/
-	/*                                              Drawing                                                 */
-	/********************************************************************************************************/
-	
-	
-	
-	/**
-	 * Group shapes/groups together
-	 */
-	public void group()
-	{				
-		removeSelectedDuplicate();
-		
-		for(int i=0; i<selected.size(); i++)
-		{
-			if(selected.get(i).checkGroup() != 0)
-			{
-				for(int j=0; j<shapes.size(); j++)
-				{
-					if(shapes.get(j).checkGroup() == selected.get(i).checkGroup())
-						shapes.get(j).group(gID);
-				}
-			}
-			else
-				selected.get(i).group(gID);
-		}
-		
-		if(!selected.isEmpty())
-		{
-			PolyObj temp = selected.getLast();
-			selected.clear();
-			selected.add(temp);
-		}
-		
-		gID++;
-		this.refresh();
-	}
-	
-	/**
-	 * Ungroup grouped shapes/groups
-	 */
-	public void ungroup()
-	{
-		removeSelectedDuplicate();
-
-		for(int i=selected.size()-1; i>=0 ; i--)
-		{
-			for(int j=0; j<shapes.size(); j++)
-			{
-				if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
-				{
-					shapes.get(j).ungroup();
-					
-					if(!selected.contains(shapes.get(j)))
-						selected.add(shapes.get(j));
-				}
-			}
-			
-			selected.get(i).ungroup();
-		}
-		
-		this.refresh();
-	}
-
 	/**
 	 * Delete the selected shape(s)/group(s)
 	 */
@@ -187,23 +122,6 @@ public class DrawingBoard
 		this.refresh();
 	}
 	
-	private void removeSelectedDuplicate()
-	{
-		for(int i=0; i<selected.size();i++)
-		{
-			System.out.println("check selected" + i);
-			
-			for(int j=selected.size()-1; j>i; j--)
-			{
-				if(selected.get(j).checkGroup()!=0 && selected.get(j).checkGroup() == selected.get(i).checkGroup())
-				{
-					System.out.println("selected" + j);
-					selected.remove(j);
-				}
-			}
-		}
-	}
-			
 	/**
 	 * Get the current stroke width
 	 * @return
@@ -682,9 +600,91 @@ public class DrawingBoard
 		}
 	}
 	
-	/********************************************************************************************************/
-	/*                                               Paint                                                  */
-	/********************************************************************************************************/
+	//********************************************************************************************************/
+	//                                             Grouping                                                  */
+	//********************************************************************************************************/
+		
+	/**
+	 * Group shapes/groups together
+	 */
+	public void group()
+	{				
+		removeSelectedDuplicate();
+		
+		for(int i=0; i<selected.size(); i++)
+		{
+			if(selected.get(i).checkGroup() != 0)
+			{
+				for(int j=shapes.size()-1; j>=0; j--)
+				{
+					if( !shapes.get(j).equals(selected.get(i)) && shapes.get(j).checkGroup() == selected.get(i).checkGroup())
+						shapes.get(j).group(gID);
+				}
+				
+				selected.get(i).group(gID);				
+			}
+			else
+				selected.get(i).group(gID);
+		}
+		
+		if(!selected.isEmpty())
+		{
+			PolyObj temp = selected.getLast();
+			selected.clear();
+			selected.add(temp);
+		}
+			
+		gID++;
+		this.refresh();
+	}
+	
+	/**
+	 * Ungroup grouped shapes/groups
+	 */
+	public void ungroup()
+	{
+		removeSelectedDuplicate();
+
+		for(int i=selected.size()-1; i>=0 ; i--)
+		{
+			for(int j=0; j<shapes.size(); j++)
+			{
+				if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
+				{
+					shapes.get(j).ungroup();
+					
+					if(!selected.contains(shapes.get(j)))
+						selected.add(shapes.get(j));
+				}
+			}
+			
+			selected.get(i).ungroup();
+		}
+		
+		this.refresh();
+	}
+	
+	private void removeSelectedDuplicate()
+	{
+		for(int i=0; i<selected.size();i++)
+		{
+			System.out.println("check selected" + i);
+			
+			for(int j=selected.size()-1; j>i; j--)
+			{
+				if(selected.get(j).checkGroup()!=0 && selected.get(j).checkGroup() == selected.get(i).checkGroup())
+				{
+					System.out.println("selected" + j);
+					selected.remove(j);
+				}
+			}
+		}
+	}
+	
+	
+	//********************************************************************************************************/
+	//                                               Paint                                                   */
+	//********************************************************************************************************/
 	
 
 	public void paintComponent(Graphics gg)
@@ -860,9 +860,9 @@ public class DrawingBoard
 	}
 	
 	
-	/********************************************************************************************************/
-	/*                                          Document Properties                                         */
-	/********************************************************************************************************/
+	//********************************************************************************************************/
+	//*                                          Document Properties                                         */
+	//********************************************************************************************************/
 	
 	
 	/**
@@ -976,14 +976,14 @@ public class DrawingBoard
 	}
 	
 	
-	/********************************************************************************************************/
-	/*                                            File Handling                                             */
-	/********************************************************************************************************/
+	//********************************************************************************************************/
+	//*                                            File Handling                                             */
+	//********************************************************************************************************/
 	
 	
-	/********************************************************************************************************/
-	/*                                             File Handling                                            */
-	/********************************************************************************************************/
+	//********************************************************************************************************/
+	//*                                             File Handling                                            */
+	//********************************************************************************************************/
 	
 	
 	/**
