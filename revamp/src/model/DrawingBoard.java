@@ -1607,8 +1607,10 @@ public class DrawingBoard
 	/**
 	 * Save as
 	 */	
-	public void saveas()
+	public boolean saveas()
 	{
+		boolean success = false;
+		
 		JFileChooser sv = new JFileChooser(System.getProperty("user.home"));
 		
 		sv.setFileFilter
@@ -1632,10 +1634,16 @@ public class DrawingBoard
 			File toWrite = sv.getSelectedFile();
 			
 			if(toWrite.getPath().toLowerCase().endsWith("svg"))
-				saveToFile(toWrite);
+			{
+				success = saveToFile(toWrite);
+			}
 			else
-				saveToFile(new File(toWrite.getPath()+".svg"));
-		}				
+			{
+				success = saveToFile(new File(toWrite.getPath()+".svg"));
+			}
+		}	
+		
+		return success;
 	}
 	
 	
@@ -1645,12 +1653,16 @@ public class DrawingBoard
 	 * Overwrite file if board is currently editing an SVG file
 	 * 
 	 */
-	public void save()
+	public boolean save()
 	{
+		boolean success = false;
+		
 		if(toRead == null)
 			saveas();	
 		else
-			saveToFile(toRead);
+			success = saveToFile(toRead);
+		
+		return success;
 	}
 	
 	
@@ -1659,7 +1671,7 @@ public class DrawingBoard
 	 * Write all shapes and document properties to file
 	 * @param toWrite
 	 */
-	private void saveToFile(File toWrite)
+	private boolean saveToFile(File toWrite)
 	{
 		try
 		{
@@ -1774,12 +1786,16 @@ public class DrawingBoard
 
 			transformer.transform(source, result);
 			fileName = toWrite.getName();
+			
+			return true;
 		}
 		
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
+		
+		return false;
 	}
 		
 	

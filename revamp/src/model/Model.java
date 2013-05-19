@@ -27,6 +27,8 @@ public class Model
 	
 	private LinkedList<DrawingBoard> board = new LinkedList<DrawingBoard>();
 	
+	private LinkedList<CloseTab> close = new LinkedList<CloseTab>();
+	
 	public Model()
 	{
 		this.openNew();
@@ -147,18 +149,18 @@ public class Model
 		board.get(index).deselect();
 	}
 	
-	public void save()
+	public boolean save()
 	{
 		int index = this.getSelectedIndex();
 
-		board.get(index).save();
+		return board.get(index).save();
 	}
 	
-	public void saveAs()
+	public boolean saveAs()
 	{
 		int index = this.getSelectedIndex();
 
-		board.get(index).saveas();
+		return board.get(index).saveas();
 	}
 	
 	public void document()
@@ -229,14 +231,19 @@ public class Model
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				
+		close.add(new CloseTab(this,title));
+		
 		this.add(scroll);
-		this.setTitleAt(this.getTabCount()-1, title);
+		this.setTabComponentAt(this.getTabCount()-1, close.getLast());
 		this.setSelectedIndex(this.getTabCount()-1);
 	}
 	
-	public void closeTab()
+	public void closeTab(CloseTab tab)
 	{
+		this.remove(this.indexOfTabComponent(tab));
 		
+		if(this.getTabCount() == 0)
+			openNew();
 	}
 	
 	public LinkedList<DrawingBoard> getBoard()
