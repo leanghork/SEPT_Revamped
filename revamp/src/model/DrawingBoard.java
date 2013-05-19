@@ -46,6 +46,7 @@ public class DrawingBoard
 	private PolyObj group = null;
 	
 	private int point = 0;
+	private PolyObj pointed = null;
 		
 	/**
 	 * Create a clean drawing board
@@ -164,6 +165,7 @@ public class DrawingBoard
 					}
 				}
 			}
+			this.refresh();
 		}
 		
 		else
@@ -413,16 +415,15 @@ public class DrawingBoard
 	
 	public void resizeSelected(double endX, double endY)
 	{
-		System.out.println("point : "+point);
 		this.removeSelectedDuplicate();
-		
-		switch(point)
+
+		for(int i=0; i<selected.size();i++)
 		{
-			case 1:
+			if(selected.get(i).checkGroup() == 0  && selected.size() == 1)
 			{
-				for(int i=0; i<selected.size();i++)
+				switch(point)
 				{
-					if(selected.get(i).checkGroup() == 0)
+					case 1:
 					{
 						if(selected.get(i).shape instanceof Rectangle2D)
 						{
@@ -435,55 +436,392 @@ public class DrawingBoard
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
 							
 							if(width < 0)
 							{
-								double temp = minX;
-								minX = maxX;
-								maxX = temp;
-								
-								width = Math.abs(width);
+								selected.get(i).replaceShape(new Rectangle2D.Double(maxX - width, minY, Math.abs(width), height));
+								point = 2;
 							}
 							
 							if(height < 0)
 							{
-								double temp = minY;
-								minY = maxY;
-								maxY = temp;
-								
-								height = Math.abs(height);
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY + height, width, Math.abs(height)));
+								point = 4;
 							}
 							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Ellipse2D)
+						{
+							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
+							
+							double minX = endX;
+							double minY = endY;
+							double maxX = theShape.getMaxX();
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(maxX - width, minY, Math.abs(width), height));
+								point = 2;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY + height, width, Math.abs(height)));
+								point = 4;
+							}
+							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Line2D)
+						{
+							Line2D theShape = (Line2D)selected.get(i).shape;
+							
+							double x1 = endX;
+							double y1 = endY;
+							
+							double x2 = theShape.getX2();
+							double y2 = theShape.getY2();
+							
+							selected.get(i).replaceShape(new Line2D.Double(x1,y1,x2,y2));
+							
+							this.refresh();
+						}
+						
+					}
+						break;
+						
+					case 2:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = endY;
+							double maxX = endX;
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
 							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 1;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, maxY - height, width, Math.abs(height)));
+								point = 3;
+							}
+							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Ellipse2D)
+						{
+							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = endY;
+							double maxX = endX;
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 1;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX, maxY - height, width, Math.abs(height)));
+								point = 3;
+							}
+							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Line2D)
+						{
+							Line2D theShape = (Line2D)selected.get(i).shape;
+							
+							double x2 = endX;
+							double y2 = endY;
+							
+							double x1 = theShape.getX1();
+							double y1 = theShape.getY1();
+							
+							selected.get(i).replaceShape(new Line2D.Double(x1,y1,x2,y2));
+							
+							this.refresh();
+						}
+					}			
+						break;
+						
+					case 3:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = theShape.getMinY();
+							double maxX = endX;
+							double maxY = endY;
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 4;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, maxY - height, width, Math.abs(height)));
+								point = 2;
+							}
+							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Ellipse2D)
+						{
+							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = theShape.getMinY();
+							double maxX = endX;
+							double maxY = endY;
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 4;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX, maxY - height, width, Math.abs(height)));
+								point = 2;
+							}
 							
 							this.refresh();
 						}
 					}
+						break;
+						
+					case 4:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = endX;
+							double minY = theShape.getMinY();
+							double maxX = theShape.getMaxX();
+							double maxY = endY;
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(maxX - width, minY, Math.abs(width), height));
+								point = 3;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY + height, width, Math.abs(height)));
+								point = 1;
+							}
+							
+							this.refresh();
+						}
+						
+						if(selected.get(i).shape instanceof Ellipse2D)
+						{
+							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
+							
+							double minX = endX;
+							double minY = theShape.getMinY();
+							double maxX = theShape.getMaxX();
+							double maxY = endY;
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY, width, height));
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(maxX - width, minY, Math.abs(width), height));
+								point = 3;
+							}
+							
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Ellipse2D.Double(minX, minY + height, width, Math.abs(height)));
+								point = 1;
+							}
+							
+							this.refresh();
+						}
+					}
+						break;
+						
+					case 5:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = endY;
+							double maxX = theShape.getMaxX();
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+														
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, maxY - height, width, Math.abs(height)));
+								point = 7;
+							}
+							
+							this.refresh();
+						}
+					}
+						break;
+						
+					case 6:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = theShape.getMinY();
+							double maxX = endX;
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+								
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 8;
+							}
+														
+							this.refresh();
+						}
+					}
+						break;
+						
+					case 7:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = theShape.getMinX();
+							double minY = theShape.getMinY();
+							double maxX = theShape.getMaxX();
+							double maxY = endY;
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+														
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+														
+							if(height < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY + height, width, Math.abs(height)));
+								point = 5;
+							}
+							
+							this.refresh();
+						}
+					}
+						break;
+						
+					case 8:
+					{
+						if(selected.get(i).shape instanceof Rectangle2D)
+						{
+							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
+							
+							double minX = endX;
+							double minY = theShape.getMinY();
+							double maxX = theShape.getMaxX();
+							double maxY = theShape.getMaxY();
+							
+							double width = maxX - minX;
+							double height = maxY - minY;
+							
+							selected.get(i).replaceShape(new Rectangle2D.Double(minX, minY, width, height));
+									
+							
+							if(width < 0)
+							{
+								selected.get(i).replaceShape(new Rectangle2D.Double(minX + width, minY, Math.abs(width), height));
+								point = 6;
+							}
+														
+							this.refresh();
+						}
+					}
+						break;
+					default:
+						break;
 				}
 			}
-				break;
-			case 2:
-				break;
-			case 3:
-				break;
-			case 4:
-				break;
-			case 5:
-				break;
-			case 6:
-				break;
-			case 7:
-				break;
-			case 8:
-				break;
-			default:
-				break;
 		}
 	}
 	
 	public void trackMouse(double X, double Y)
 	{
 		point = 0;
+		pointed = null;
+		
 		this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 		this.removeSelectedDuplicate();
 		
@@ -510,6 +848,7 @@ public class DrawingBoard
 					if(cursor.intersects(new Rectangle2D.Double(x1-3.5, y1-3.5, 7, 7)))
 					{
 						point = 1;
+						pointed = selected.get(i);
 						
 						if(y1 > y2)
 							this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
@@ -518,17 +857,14 @@ public class DrawingBoard
 
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x2-3.5, y2-3.5, 7, 7)))
-					{						
+					{			
+						point = 2;
+						pointed = selected.get(i);
+						
 						if(y1 > y2)
-						{
-							point = 3;
 							this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
-						}
 						else
-						{
-							point = 2;
 							this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
-						}
 					}
 				}
 				
@@ -544,41 +880,57 @@ public class DrawingBoard
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 ,7 ,7)))
 					{
 						point = 1;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 ,7 ,7)))
 					{
 						point = 2;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height,7 ,7)))
 					{
 						point = 3;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height,7 ,7)))
 					{
 						point = 4;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width/2 ,y-3.5 ,7 ,7)))
 					{
 						point = 5;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height/2 ,7 ,7)))
 					{
 						point = 6;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width/2 ,y-3.5 + height,7 ,7)))
 					{
 						point = 7;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height/2,7 ,7)))
 					{
 						point = 8;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
 					}
 				}
@@ -595,21 +947,29 @@ public class DrawingBoard
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 ,7 ,7)))
 					{
 						point = 1;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 ,7 ,7)))
 					{
 						point = 2;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 + width ,y-3.5 + height,7 ,7)))
 					{
 						point = 3;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
 					}
 					if(cursor.intersects(new Rectangle2D.Double(x-3.5 ,y-3.5 + height,7 ,7)))
 					{
 						point = 4;
+						pointed = selected.get(i);
+						
 						this.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
 					}
 				}
