@@ -23,6 +23,11 @@ import org.w3c.dom.Node;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * 
+ * @author Leanghork, Marcel, Kelvin, Addy
+ *
+ */
 public class DrawingBoard 
 	extends JPanel
 {
@@ -59,6 +64,10 @@ public class DrawingBoard
 		this.setSize();
 	}
 	
+	//*************************************************************
+	//* Constructor                                               *
+	//*************************************************************
+	
 	/**
 	 * Open SVG file
 	 * @param toRead
@@ -74,7 +83,7 @@ public class DrawingBoard
 		
 	/**
 	 * Get DrawingBoard
-	 * @return
+	 * @return Return the drawing board enclosed in a panel
 	 */
 	public JPanel getPanel()
 	{
@@ -84,6 +93,45 @@ public class DrawingBoard
 		panel.add(this);
 		
 		return panel;
+	}
+		
+	//*************************************************************
+	//* Drawing                                                   *
+	//*************************************************************
+	
+	/**
+	 * Get current zoom
+	 * @return the current zoom value %
+	 */
+	public int getZoom()
+	{
+		return zoom;
+	}
+	
+	/**
+	 * Set zoom 
+	 * @param zoom
+	 */
+	public void setZoom(int zoom)
+	{
+		this.zoom = zoom;
+		this.setSize();
+		this.refresh();
+	}
+	
+	//*************************************************************
+	//* Drawing                                                   *
+	//*************************************************************
+	
+	/**
+	 * Add shape to the list of shapes
+	 * @param toAdd PolyObj to add to the drawing board
+	 */
+	public void addShape(PolyObj toAdd)
+	{
+		this.shapes.add(toAdd);
+		
+		this.refresh();
 	}
 	
 	/**
@@ -127,7 +175,7 @@ public class DrawingBoard
 	
 	/**
 	 * Get the current stroke width
-	 * @return
+	 * @return currently selected strokewidth color
 	 */
 	public int getStrokeWidth()
 	{
@@ -210,7 +258,7 @@ public class DrawingBoard
 	
 	/**
 	 * Get the current stroke color
-	 * @return
+	 * @return currently selected stroke color
 	 */
 	public Color getStroke()
 	{
@@ -252,31 +300,144 @@ public class DrawingBoard
 	
 	/**
 	 * Get the current fill color
-	 * @return
+	 * @return currently selected fill color
 	 */
 	public Color getFill()
 	{
 		return fill;
 	}
 	
+	//*************************************************************
+	//* Select                                                    *
+	//*************************************************************
+	
 	/**
-	 * Add shape to the list of shapes
-	 * @param toAdd
+	 * Select a specific shape/group at the point where mouse click is detected
+	 * @param X mouse x-coordinate
+	 * @param Y mouse y-coordinate
 	 */
-	public void addShape(PolyObj toAdd)
+	public void select(double X, double Y)
 	{
-		this.shapes.add(toAdd);
+		this.selected.clear();
+				
+		for(int i = shapes.size()-1; i>=0; i--)
+		{
+			PolyObj toSelect = shapes.get(i);
+			
+			Rectangle2D.Double area = new Rectangle2D.Double(X-toSelect.strokeWidth-2,Y-toSelect.strokeWidth-2,toSelect.strokeWidth *2+4, toSelect.strokeWidth*2+4);
+			
+			if(toSelect.shape.intersects(area))
+			{
+				selected.add(toSelect);
+				break;
+			}
+		}
+		
+		removeSelectedDuplicate();
+	}
+		
+	/**
+	 * Select multiple shape/group by dragging the mouse cursor on the drawing board
+	 * @param startX initial mouse x-coordinate
+	 * @param startY initial mouse y-coordinate
+	 * @param endX final mouse x-coordinate
+	 * @param endY final mouse x-coordinate
+	 */
+	public void select(double startX, double startY, double endX, double endY)
+	{
+		this.selected.clear();
+		
+		double width = Math.abs(startX-endX);
+		double height = Math.abs(startY-endY);
+		
+		if(startX>endX)
+		{
+			double temp = startX;
+			startX = endX;
+			endX = temp;
+		}
+		
+		if(startY>endY)
+		{
+			double temp = startY;
+			startY = endY;
+			endY = temp;
+		}
+		
+		Rectangle2D.Double area = new Rectangle2D.Double(startX,startY,width,height);
+		
+		for(int i = shapes.size()-1; i>=0; i--)
+		{
+			PolyObj toSelect = shapes.get(i);
+			
+			if(toSelect.shape.intersects(area) && !selected.contains(toSelect))
+				selected.add(toSelect);
+		}
+		
+		removeSelectedDuplicate();
 		
 		this.refresh();
 	}
-
+	
+	
+	/**
+	 * Select everything on the drawing board
+	 */
+	public void selectAll()
+	{
+		selected.clear();
+		
+		for(int i=0;i<shapes.size();i++)
+		{
+			selected.add(shapes.get(i));
+		}
+		
+		removeSelectedDuplicate();
+		this.refresh();
+	}
+	
+	
+	/**
+	 * Get the list of selected shapes
+	 * @return Number of currently selected shapes
+	 */
+	public int getSelectedCount()
+	{
+		return selected.size();
+	}
+	
+	
+	/**
+	 * Set drag shadow
+	 * @param temp 
+	 */
+	public void setTempPolyObj(PolyObj temp)
+	{
+		shadow = temp;
+		
+		this.refresh();
+	}
+	
+	
+	/**
+	 * Deselect all selected shape(s)/group(s)
+	 */
+	public void deselect()
+	{
+		selected.clear();
+		refresh();
+	}
+	
+	//*************************************************************
+	//* Editting                                                  *
+	//*************************************************************
+	
 	/**
 	 * Shift shape(s) or group(s) location
-	 *  
-	 * @param startX
-	 * @param startY
-	 * @param endX
-	 * @param endY
+	 * @param startX initial mouse x-coordinate
+	 * @param startY initial mouse y-coordinate
+	 * @param endX final mouse x-coordinate
+	 * @param endY final mouse y-coordinate
 	 */
 	public void moves(double startX, double startY, double endX, double endY)
 	{
@@ -381,39 +542,13 @@ public class DrawingBoard
 			}
 		}
 	}
-		
-	
-	/********************************************************************************************************/
-	/*                                              View                                                  */
-	/********************************************************************************************************/
 	
 	/**
-	 * Get current zoom
-	 * @return
+	 * Resize the selected object 
+	 * @param X current x-coordinate of mouse
+	 * @param Y current y-coordinate of mouse
 	 */
-	public int getZoom()
-	{
-		return zoom;
-	}
-	
-	/**
-	 * Set zoom 
-	 * @param zoom
-	 */
-	public void setZoom(int zoom)
-	{
-		this.zoom = zoom;
-		this.setSize();
-		this.refresh();
-	}
-	
-
-
-	/********************************************************************************************************/
-	/*                                              Paint                                                   */
-	/********************************************************************************************************/
-	
-	public void resizeSelected(double endX, double endY)
+	public void resizeSelected(double X, double Y)
 	{
 		this.removeSelectedDuplicate();
 
@@ -429,8 +564,8 @@ public class DrawingBoard
 						{
 							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
 							
-							double minX = endX;
-							double minY = endY;
+							double minX = X;
+							double minY = Y;
 							double maxX = theShape.getMaxX();
 							double maxY = theShape.getMaxY();
 							
@@ -458,8 +593,8 @@ public class DrawingBoard
 						{
 							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
 							
-							double minX = endX;
-							double minY = endY;
+							double minX = X;
+							double minY = Y;
 							double maxX = theShape.getMaxX();
 							double maxY = theShape.getMaxY();
 							
@@ -487,8 +622,8 @@ public class DrawingBoard
 						{
 							Line2D theShape = (Line2D)selected.get(i).shape;
 							
-							double x1 = endX;
-							double y1 = endY;
+							double x1 = X;
+							double y1 = Y;
 							
 							double x2 = theShape.getX2();
 							double y2 = theShape.getY2();
@@ -508,8 +643,8 @@ public class DrawingBoard
 							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
 							
 							double minX = theShape.getMinX();
-							double minY = endY;
-							double maxX = endX;
+							double minY = X;
+							double maxX = Y;
 							double maxY = theShape.getMaxY();
 							
 							double width = maxX - minX;
@@ -537,8 +672,8 @@ public class DrawingBoard
 							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
 							
 							double minX = theShape.getMinX();
-							double minY = endY;
-							double maxX = endX;
+							double minY = X;
+							double maxX = Y;
 							double maxY = theShape.getMaxY();
 							
 							double width = maxX - minX;
@@ -565,8 +700,8 @@ public class DrawingBoard
 						{
 							Line2D theShape = (Line2D)selected.get(i).shape;
 							
-							double x2 = endX;
-							double y2 = endY;
+							double x2 = X;
+							double y2 = Y;
 							
 							double x1 = theShape.getX1();
 							double y1 = theShape.getY1();
@@ -586,8 +721,8 @@ public class DrawingBoard
 							
 							double minX = theShape.getMinX();
 							double minY = theShape.getMinY();
-							double maxX = endX;
-							double maxY = endY;
+							double maxX = X;
+							double maxY = Y;
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
@@ -615,8 +750,8 @@ public class DrawingBoard
 							
 							double minX = theShape.getMinX();
 							double minY = theShape.getMinY();
-							double maxX = endX;
-							double maxY = endY;
+							double maxX = X;
+							double maxY = Y;
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
@@ -646,10 +781,10 @@ public class DrawingBoard
 						{
 							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
 							
-							double minX = endX;
+							double minX = X;
 							double minY = theShape.getMinY();
 							double maxX = theShape.getMaxX();
-							double maxY = endY;
+							double maxY = Y;
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
@@ -675,10 +810,10 @@ public class DrawingBoard
 						{
 							Ellipse2D theShape = (Ellipse2D)selected.get(i).shape;
 							
-							double minX = endX;
+							double minX = X;
 							double minY = theShape.getMinY();
 							double maxX = theShape.getMaxX();
-							double maxY = endY;
+							double maxY = Y;
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
@@ -709,7 +844,7 @@ public class DrawingBoard
 							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
 							
 							double minX = theShape.getMinX();
-							double minY = endY;
+							double minY = Y;
 							double maxX = theShape.getMaxX();
 							double maxY = theShape.getMaxY();
 							
@@ -737,7 +872,7 @@ public class DrawingBoard
 							
 							double minX = theShape.getMinX();
 							double minY = theShape.getMinY();
-							double maxX = endX;
+							double maxX = X;
 							double maxY = theShape.getMaxY();
 							
 							double width = maxX - minX;
@@ -765,7 +900,7 @@ public class DrawingBoard
 							double minX = theShape.getMinX();
 							double minY = theShape.getMinY();
 							double maxX = theShape.getMaxX();
-							double maxY = endY;
+							double maxY = Y;
 							
 							double width = maxX - minX;
 							double height = maxY - minY;
@@ -789,7 +924,7 @@ public class DrawingBoard
 						{
 							Rectangle2D theShape = (Rectangle2D)selected.get(i).shape;
 							
-							double minX = endX;
+							double minX = X;
 							double minY = theShape.getMinY();
 							double maxX = theShape.getMaxX();
 							double maxY = theShape.getMaxY();
@@ -817,6 +952,11 @@ public class DrawingBoard
 		}
 	}
 	
+	/**
+	 * Find the anchor of selected shape to be used with resize function
+	 * @param X mouse current x-coordinate
+	 * @param Y mouse current y-coordinate
+	 */
 	public void trackMouse(double X, double Y)
 	{
 		point = 0;
@@ -979,136 +1119,104 @@ public class DrawingBoard
 		}
 	}
 	
+	/**
+	 * Get the resize anchor selected
+	 * @return the anchor point of selected shape for resize
+	 */
 	public int getAnchor()
 	{
 		return point;
 	}
-	/********************************************************************************************************/
-	/*                                              Select                                                  */
-	/********************************************************************************************************/
+	
+	
+	//*************************************************************
+	//* Group                                                     *
+	//*************************************************************
 	
 	/**
-	 * Select a specific shape/group at the point where mouse click is detected
-	 * @param startX
-	 * @param startY
+	 * Group shapes/groups together
 	 */
-	public void select(double startX, double startY)
-	{
-		this.selected.clear();
-				
-		for(int i = shapes.size()-1; i>=0; i--)
+	public void group()
+	{				
+		removeSelectedDuplicate();
+		
+		for(int i=0; i<selected.size(); i++)
 		{
-			PolyObj toSelect = shapes.get(i);
-			
-			Rectangle2D.Double area = new Rectangle2D.Double(startX-toSelect.strokeWidth-2,startY-toSelect.strokeWidth-2,toSelect.strokeWidth *2+4, toSelect.strokeWidth*2+4);
-			
-			if(toSelect.shape.intersects(area))
+			if(selected.get(i).checkGroup() != 0)
 			{
-				selected.add(toSelect);
-				break;
+				for(int j=shapes.size()-1; j>=0; j--)
+				{
+					if( !shapes.get(j).equals(selected.get(i)) && shapes.get(j).checkGroup() == selected.get(i).checkGroup())
+						shapes.get(j).group(gID);
+				}
+				selected.get(i).group(gID);				
+			}
+			else
+			{
+				selected.get(i).group(gID);
 			}
 		}
 		
-		removeSelectedDuplicate();
-	}
-		
-	/**
-	 * Select multiple shape/group by dragging the mouse cursor on the drawing board
-	 * @param startX
-	 * @param startY
-	 * @param endX
-	 * @param endY
-	 */
-	public void select(double startX, double startY, double endX, double endY)
-	{
-		this.selected.clear();
-		
-		double width = Math.abs(startX-endX);
-		double height = Math.abs(startY-endY);
-		
-		if(startX>endX)
+		if(!selected.isEmpty())
 		{
-			double temp = startX;
-			startX = endX;
-			endX = temp;
+			PolyObj temp = selected.getLast();
+			selected.clear();
+			selected.add(temp);
 		}
-		
-		if(startY>endY)
-		{
-			double temp = startY;
-			startY = endY;
-			endY = temp;
-		}
-		
-		Rectangle2D.Double area = new Rectangle2D.Double(startX,startY,width,height);
-		
-		for(int i = shapes.size()-1; i>=0; i--)
-		{
-			PolyObj toSelect = shapes.get(i);
 			
-			if(toSelect.shape.intersects(area) && !selected.contains(toSelect))
-				selected.add(toSelect);
-		}
-		
-		removeSelectedDuplicate();
-		
+		gID++;
 		this.refresh();
 	}
 	
-	
 	/**
-	 * Select everything on the drawing board
+	 * Ungroup grouped shapes/groups
 	 */
-	public void selectAll()
+	public void ungroup()
 	{
-		selected.clear();
-		
-		for(int i=0;i<shapes.size();i++)
+		removeSelectedDuplicate();
+
+		for(int i=selected.size()-1; i>=0 ; i--)
 		{
-			selected.add(shapes.get(i));
+			if(selected.get(i).checkGroup() != 0)
+			{
+				for(int j=0; j<shapes.size(); j++)
+				{
+					if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
+					{
+						shapes.get(j).ungroup();
+						
+						if(!selected.contains(shapes.get(j)))
+							selected.add(shapes.get(j));
+					}
+				}
+				
+				selected.get(i).ungroup();
+			}
 		}
 		
-		removeSelectedDuplicate();
 		this.refresh();
 	}
 	
-	
 	/**
-	 * Get the list of selected shapes
-	 * @return
+	 * Remove shapes of the same group from the selected list
 	 */
-	public int getSelectedCount()
+	private void removeSelectedDuplicate()
 	{
-		return selected.size();
+		for(int i=0; i<selected.size();i++)
+		{			
+			for(int j=selected.size()-1; j>i; j--)
+			{
+				if(selected.get(j).checkGroup()!=0 && selected.get(j).checkGroup() == selected.get(i).checkGroup())
+					selected.remove(j);
+			}
+		}
 	}
 	
-	
 	/**
-	 * Set drag shadow
-	 * @param temp
+	 * Get bound for grouped shapes
+	 * @param selects selected object
+	 * @return maximum value of x and y coordinate of shapes in a group
 	 */
-	public void setTempPolyObj(PolyObj temp)
-	{
-		shadow = temp;
-		
-		this.refresh();
-	}
-	
-	
-	/**
-	 * Deselect all selected shape(s)/group(s)
-	 */
-	public void deselect()
-	{
-		selected.clear();
-		refresh();
-	}
-	
-	/********************************************************************************************************/
-	/*                                               Group                                                  */
-	/********************************************************************************************************/
-	
-	
 	private MaxMinValue getMinMax(PolyObj selects)
 	{
 		double minX=0, maxX=0, minY=0, maxY=0;
@@ -1202,7 +1310,10 @@ public class DrawingBoard
 		return new MaxMinValue(maxX,maxY,minX,minY);
 	}
 	
-	
+	/**
+	 * Store maximum minimum value of x and y coordinate of shapes in a group
+	 * @author Leanghork, Marcel, Kelvin, Addy
+	 */
 	public class MaxMinValue
 	{
 		public double maxX;
@@ -1219,92 +1330,10 @@ public class DrawingBoard
 		}
 	}
 	
-	//********************************************************************************************************/
-	//                                             Grouping                                                  */
-	//********************************************************************************************************/
-		
-	/**
-	 * Group shapes/groups together
-	 */
-	public void group()
-	{				
-		removeSelectedDuplicate();
-		
-		for(int i=0; i<selected.size(); i++)
-		{
-			if(selected.get(i).checkGroup() != 0)
-			{
-				for(int j=shapes.size()-1; j>=0; j--)
-				{
-					if( !shapes.get(j).equals(selected.get(i)) && shapes.get(j).checkGroup() == selected.get(i).checkGroup())
-						shapes.get(j).group(gID);
-				}
-				selected.get(i).group(gID);				
-			}
-			else
-			{
-				selected.get(i).group(gID);
-			}
-		}
-		
-		if(!selected.isEmpty())
-		{
-			PolyObj temp = selected.getLast();
-			selected.clear();
-			selected.add(temp);
-		}
-			
-		gID++;
-		this.refresh();
-	}
+	//*************************************************************
+	//* Paint                                                     *
+	//*************************************************************
 	
-	/**
-	 * Ungroup grouped shapes/groups
-	 */
-	public void ungroup()
-	{
-		removeSelectedDuplicate();
-
-		for(int i=selected.size()-1; i>=0 ; i--)
-		{
-			if(selected.get(i).checkGroup() != 0)
-			{
-				for(int j=0; j<shapes.size(); j++)
-				{
-					if(selected.get(i).checkGroup() == shapes.get(j).checkGroup() && !selected.get(i).equals(shapes.get(j)))
-					{
-						shapes.get(j).ungroup();
-						
-						if(!selected.contains(shapes.get(j)))
-							selected.add(shapes.get(j));
-					}
-				}
-				
-				selected.get(i).ungroup();
-			}
-		}
-		
-		this.refresh();
-	}
-	
-	private void removeSelectedDuplicate()
-	{
-		for(int i=0; i<selected.size();i++)
-		{			
-			for(int j=selected.size()-1; j>i; j--)
-			{
-				if(selected.get(j).checkGroup()!=0 && selected.get(j).checkGroup() == selected.get(i).checkGroup())
-					selected.remove(j);
-			}
-		}
-	}
-	
-	
-	//********************************************************************************************************/
-	//                                               Paint                                                   */
-	//********************************************************************************************************/
-	
-
 	public void paintComponent(Graphics gg)
 	{
 		Graphics2D g = (Graphics2D)gg;
@@ -1318,6 +1347,10 @@ public class DrawingBoard
 		
 	}	
 	
+	/**
+	 * Display all shapes drawn
+	 * @param g Graphics2D
+	 */
 	private void drawShape(Graphics2D g)
 	{
 		for(int i=0; i<shapes.size(); i++)
@@ -1342,7 +1375,10 @@ public class DrawingBoard
 		}
 	}
 
-	
+	/**
+	 * Draw selected bounds
+	 * @param g Graphics2D
+	 */
 	private void drawSelected(Graphics2D g)
 	{
 		removeSelectedDuplicate();
@@ -1453,7 +1489,10 @@ public class DrawingBoard
 		
 	}
 	
-	
+	/**
+	 * draw drag shadow
+	 * @param g Graphics2D
+	 */
 	private void drawShadow(Graphics2D g)
 	{
 		if(shadow != null)
@@ -1477,15 +1516,13 @@ public class DrawingBoard
 		this.repaint();
 	}
 	
-	
-	//********************************************************************************************************/
-	//*                                          Document Properties                                         */
-	//********************************************************************************************************/
-	
+	//*************************************************************
+	//* Document Properties                                       *
+	//*************************************************************
 	
 	/**
-	 * Returns the file name of current SVG drawing board
-	 * @return
+	 * Get the file name of current drawing board
+	 * @return fileName
 	 */
 	public String getFileName()
 	{
@@ -1495,6 +1532,52 @@ public class DrawingBoard
 		return toRead.getName();
 	}
 	
+	/**
+	 * Show document properties editting dialog
+	 */
+	public void document()
+	{
+		JTextField wField = new JTextField(5);
+		JTextField hField = new JTextField(5);
+		String width = Integer.toString((int)size.getWidth()), height = Integer.toString((int)size.getHeight());
+
+		JPanel myPanel = new JPanel();
+		myPanel.add(new JLabel("Width : "));
+		wField.setText(width);
+		myPanel.add(wField);
+		myPanel.add(Box.createHorizontalStrut(15));
+		hField.setText(height);
+		myPanel.add(new JLabel("Height : "));
+		myPanel.add(hField);
+		
+		do
+		{
+			int result = JOptionPane.showConfirmDialog(this, myPanel, "Document Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
+			
+			if(result == JOptionPane.OK_OPTION)
+			{
+				width = wField.getText();
+				height = hField.getText();
+			}
+			else if(result == JOptionPane.CANCEL_OPTION)
+				break;
+			
+		}while(! Pattern.matches("[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*",width) || ! Pattern.matches("[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*",width));
+		
+		size = new Dimension(java.lang.Integer.parseInt(width),java.lang.Integer.parseInt(height));
+		setSize();
+	}
+	
+	/**
+	 * Set current board size
+	 */
+	private void setSize()
+	{
+		Dimension bSize = new Dimension((int)(size.getWidth()*zoom/100),(int)(size.getHeight()*zoom/100));
+		
+		this.setPreferredSize(bSize);
+		this.refresh();
+	}
 	
 	/**
 	 * Initialize drawing board to the default size required to display all elements
@@ -1541,72 +1624,15 @@ public class DrawingBoard
 		
 		size = new Dimension(maxX+100,maxY+100);
 	}
+	
+	//*************************************************************
+	//* File Handling                                             *
+	//*************************************************************
 
-	
 	/**
-	 * Set current board size
+	 * Save file
+	 * @return true if file successfully save
 	 */
-	private void setSize()
-	{
-		Dimension bSize = new Dimension((int)(size.getWidth()*zoom/100),(int)(size.getHeight()*zoom/100));
-		
-		this.setPreferredSize(bSize);
-		this.refresh();
-	}
-	
-	
-	/**
-	 * Document properties
-	 */
-	
-	public void document()
-	{
-		JTextField wField = new JTextField(5);
-		JTextField hField = new JTextField(5);
-		String width = Integer.toString((int)size.getWidth()), height = Integer.toString((int)size.getHeight());
-
-		JPanel myPanel = new JPanel();
-		myPanel.add(new JLabel("Width : "));
-		wField.setText(width);
-		myPanel.add(wField);
-		myPanel.add(Box.createHorizontalStrut(15));
-		hField.setText(height);
-		myPanel.add(new JLabel("Height : "));
-		myPanel.add(hField);
-		
-		do
-		{
-			int result = JOptionPane.showConfirmDialog(this, myPanel, "Document Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
-			
-			if(result == JOptionPane.OK_OPTION)
-			{
-				width = wField.getText();
-				height = hField.getText();
-			}
-			else if(result == JOptionPane.CANCEL_OPTION)
-				break;
-			
-		}while(! Pattern.matches("[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*",width) || ! Pattern.matches("[\\x00-\\x20]*[+]?(\\p{Digit}+)(\\.)?(\\p{Digit}+)?[\\x00-\\x20]*",width));
-		
-		size = new Dimension(java.lang.Integer.parseInt(width),java.lang.Integer.parseInt(height));
-		setSize();
-		
-	}
-	
-	
-	//********************************************************************************************************/
-	//*                                            File Handling                                             */
-	//********************************************************************************************************/
-	
-	
-	//********************************************************************************************************/
-	//*                                             File Handling                                            */
-	//********************************************************************************************************/
-	
-	
-	/**
-	 * Save as
-	 */	
 	public boolean saveas()
 	{
 		boolean success = false;
@@ -1645,27 +1671,22 @@ public class DrawingBoard
 		
 		return success;
 	}
-	
-	
-	
+		
 	/**
-	 * Save
-	 * Overwrite file if board is currently editing an SVG file
-	 * 
+	 * Save file - replace previous file
+	 * @return true if file successfully save
 	 */
 	public boolean save()
 	{
 		boolean success = false;
 		
 		if(toRead == null)
-			saveas();	
+			success = saveas();	
 		else
 			success = saveToFile(toRead);
 		
 		return success;
 	}
-	
-	
 	
 	/**
 	 * Write all shapes and document properties to file
@@ -1680,8 +1701,8 @@ public class DrawingBoard
 			Document document = parser.newDocument();
 			
 			Element svgElement = document.createElement("svg");
-			svgElement.setAttribute("width", size.getWidth()+"px");
-			svgElement.setAttribute("height", size.getHeight()+"px");
+			svgElement.setAttribute("width", (int)size.getWidth()-100+"px");
+			svgElement.setAttribute("height", (int)size.getHeight()-100+"px");
 			svgElement.setAttribute("version","1.1");
 			svgElement.setAttribute("xmlns","http://www.w3.org/2000/svg");
 			
@@ -1786,18 +1807,17 @@ public class DrawingBoard
 
 			transformer.transform(source, result);
 			fileName = toWrite.getName();
-			
-			return true;
+			toRead = toWrite;			
 		}
 		
 		catch(Exception e)
 		{
 			e.printStackTrace();
+			return false;			
 		}
 		
-		return false;
+		return true;
 	}
-		
 	
 	/**
 	 * Read SVG file
@@ -1828,6 +1848,7 @@ public class DrawingBoard
 							height=unitConvert(attributes.getValue("height"));
 
 						size = new Dimension(width,height);
+						System.out.println(size);
 					}
 					
 					if(qName.equalsIgnoreCase("g"))
@@ -2041,7 +2062,7 @@ public class DrawingBoard
 	/**
 	 * Convert the units to integer
 	 * @param input
-	 * @return
+	 * @return the converted value
 	 */
 	private int unitConvert(String input)
 	{
@@ -2085,5 +2106,5 @@ public class DrawingBoard
 				
 		return (int)result; 
 	}
-
+	
 }

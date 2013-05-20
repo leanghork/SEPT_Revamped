@@ -149,7 +149,7 @@ public class ColorObj
 	 * return RGB color given color name
 	 * 
 	 * @param name
-	 * @return
+	 * @return color with the specified name
 	 */
 	public static Color getRGBColor(String name)
 	{

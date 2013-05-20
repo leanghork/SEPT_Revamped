@@ -4,6 +4,8 @@ import view.*;
 
 import java.awt.event.*;
 
+import javax.swing.JOptionPane;
+
 public class ViewWindow 
 	implements WindowListener
 {

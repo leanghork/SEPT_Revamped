@@ -1,12 +1,12 @@
-package model;
+package view;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 
-public class closeButton extends JButton
+public class CloseButton extends JButton
 {
-	public closeButton()
+	public CloseButton()
 	{
 		int size = 20;
 		setPreferredSize(new Dimension(size, size));

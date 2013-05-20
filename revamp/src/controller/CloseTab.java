@@ -1,6 +1,11 @@
-package model;
+package controller;
 
 import javax.swing.*;
+
+import model.Model;
+
+import view.CloseButton;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -11,7 +16,7 @@ public class CloseTab
 	private Model tab = null;
 	private String title = null;
 	
-	JButton close = new closeButton();
+	JButton close = new CloseButton();
 	JLabel label = new JLabel();
 	
 	public CloseTab(Model tab, String title)
@@ -36,11 +41,13 @@ public class CloseTab
 		String message  = "Do you want to save SVG before exit";
 		String [] option = {"Yes", "No", "Cancel"};
 		
-		int opt = JOptionPane.showOptionDialog(tab, message, "Exit", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, option, JOptionPane.CANCEL_OPTION);
+		int opt = JOptionPane.showOptionDialog(tab, message, "Exit", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, option, JOptionPane.CANCEL_OPTION);
 		
 		if(opt == JOptionPane.YES_OPTION)
 		{
-			if(tab.save())
+			boolean temp = tab.save(this);
+			System.out.println(temp);
+			if(temp)
 			{
 				tab.closeTab(this);
 				tab.refresh();

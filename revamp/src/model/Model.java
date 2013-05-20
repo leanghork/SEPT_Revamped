@@ -79,7 +79,7 @@ public class Model
 	{
 		int index = this.getSelectedIndex();
 		
-		if(board.get(index).getZoom() > 0)
+		if(board.get(index).getZoom() > 100)
 			board.get(index).setZoom( board.get(index).getZoom()-100 );
 		
 		this.refresh();
@@ -149,11 +149,19 @@ public class Model
 		board.get(index).deselect();
 	}
 	
+	public boolean save(CloseTab close)
+	{
+		return board.get(this.indexOfTabComponent(close)).save();
+	}
+	
 	public boolean save()
 	{
 		int index = this.getSelectedIndex();
-
-		return board.get(index).save();
+		boolean save = board.get(index).save();
+		
+		this.setTabComponentAt(index, new CloseTab(this,board.get(index).getFileName()));
+		
+		return save;
 	}
 	
 	public boolean saveAs()
@@ -161,6 +169,26 @@ public class Model
 		int index = this.getSelectedIndex();
 
 		return board.get(index).saveas();
+	}
+	
+	public boolean saveAll()
+	{
+		boolean check = true;
+		
+		for(int index = board.size()-1; index>=0;index--)
+		{
+			this.setSelectedIndex(index);
+			boolean status = board.get(index).save();
+			check = check && status;
+			
+			if(status)
+			{
+				this.remove(index);
+				board.remove(index);
+			}
+		}
+		
+		return check;
 	}
 	
 	public void document()
@@ -240,10 +268,15 @@ public class Model
 	
 	public void closeTab(CloseTab tab)
 	{
-		this.remove(this.indexOfTabComponent(tab));
+		int index = this.indexOfTabComponent(tab);
+		this.remove(index);
+		board.remove(index);
+		
 		
 		if(this.getTabCount() == 0)
 			openNew();
+		
+		this.refresh();
 	}
 	
 	public LinkedList<DrawingBoard> getBoard()

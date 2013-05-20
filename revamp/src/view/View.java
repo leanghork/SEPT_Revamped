@@ -31,6 +31,7 @@ public class View
 				
 		this.addToFrame();
 		
+		this.setTitle("SVG Editor");
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.setSize(1000,700);
 		this.setVisible(true);
@@ -52,7 +53,7 @@ public class View
 	
 	/**
 	 * Return a configured JMenuBar
-	 * @return
+	 * @return configured JMenuBar
 	 */
 	private JMenuBar setMenu()
 	{
@@ -135,7 +136,7 @@ public class View
 
 	/**
 	 * Return a pre-configured JToolBar
-	 * @return
+	 * @return configured JToolBar
 	 */
 	private JToolBar setToolbar()
 	{		
@@ -230,7 +231,25 @@ public class View
 	 */
 	public void close()
 	{
-		System.exit(0);
+		if(tab.getTabCount() > 0)
+		{
+			String message  = "Do you want to save SVG before exit";
+			String [] option = {"Yes", "No", "Cancel"};
+			
+			int opt = JOptionPane.showOptionDialog(this, message, "Exit", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, option, JOptionPane.CANCEL_OPTION);
+			
+			if(opt == JOptionPane.YES_OPTION)
+			{
+				if(tab.saveAll())
+					System.exit(0);
+			}
+			else if(opt == JOptionPane.NO_OPTION)
+				System.exit(0);
+			else
+				return;
+		}
+		else
+			System.exit(0);
 	}
 	
 	public static void main(String[]args)
